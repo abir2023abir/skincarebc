@@ -29,22 +29,13 @@ export default defineConfig({
   },
   fonts: [
     {
-      // Editorial display serif — English headlines, numerals, wordmark.
+      // Latin display + UI. The reference's headlines are a very heavy
+      // geometric sans; Poppins 800 is the closest widely-available match.
+      // 500 covers body, labels and nav.
       provider: fontProviders.google(),
-      name: 'Instrument Serif',
+      name: 'Poppins',
       cssVariable: '--ff-display',
-      weights: [400],
-      styles: ['normal', 'italic'],
-      subsets: ['latin'],
-      display: 'swap',
-      fallbacks: ['Georgia', 'Times New Roman', 'serif'],
-    },
-    {
-      // Clean grotesk — UI, body, English product/ingredient names.
-      provider: fontProviders.google(),
-      name: 'Inter',
-      cssVariable: '--ff-ui',
-      weights: [400, 600],
+      weights: [500, 800],
       styles: ['normal'],
       subsets: ['latin'],
       display: 'swap',
@@ -52,11 +43,12 @@ export default defineConfig({
     },
     {
       // Bangla — primary copy language. Bengali subset only, so Latin
-      // characters fall through to Inter in the same stack.
+      // characters fall through to Poppins in the same stack.
+      // Two weights only: the Bengali subset is ~40 KB per weight.
       provider: fontProviders.google(),
       name: 'Hind Siliguri',
       cssVariable: '--ff-bn',
-      weights: [400, 600],
+      weights: [400, 700],
       styles: ['normal'],
       subsets: ['bengali'],
       display: 'swap',

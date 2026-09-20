@@ -1,0 +1,192 @@
+---
+import { site } from '~/config/site';
+import Icon from '~/components/ui/Icon.astro';
+
+/**
+ * Floating pill header, per the reference: a white rounded bar sitting on the
+ * page rather than a full-width band. It compacts on scroll.
+ *
+ * The compact state is driven by an IntersectionObserver on a single sentinel
+ * (see boot.ts) rather than a scroll listener — one observer callback instead
+ * of a per-frame handler.
+ */
+---
+
+<div data-header-sentinel aria-hidden="true"></div>
+
+<header class="hdr" data-header>
+  <div class="wrap">
+    <div class="bar">
+      <a class="mark" href="#top">
+        <span class="mark-dot" aria-hidden="true"></span>
+        <span class="display">{site.brandName}</span>
+      </a>
+
+      <nav class="nav" aria-label="বিভাগ">
+        <a href="#top">হোম</a>
+        <a href="#for-her">For&nbsp;Her</a>
+        <a href="#for-him">For&nbsp;Him</a>
+        <a href="#combos" class="nav-wide">কম্বো</a>
+        <a href="#faq" class="nav-wide">প্রশ্ন</a>
+      </nav>
+
+      <div class="actions">
+        <span class="actions-label">অর্ডার</span>
+        <button type="button" class="bag" data-order-open="" aria-label="অর্ডার ফর্ম খুলুন">
+          <Icon name="bag" size={19} />
+        </button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<style>
+  .hdr {
+    position: fixed;
+    inset: 0 0 auto;
+    z-index: 50;
+    padding-top: 0.9rem;
+    transition: padding-top var(--dur-base) var(--ease-out-soft);
+  }
+
+  .hdr[data-stuck] {
+    padding-top: 0.4rem;
+  }
+
+  .bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.55rem 0.6rem 0.55rem 1.35rem;
+    background: var(--color-card);
+    border-radius: var(--radius-pill);
+    box-shadow: var(--shadow-card);
+    transition: box-shadow var(--dur-base) var(--ease-out-soft);
+  }
+
+  .hdr[data-stuck] .bar {
+    box-shadow: var(--shadow-float);
+  }
+
+  /* ── Wordmark ────────────────────────────────────────────────────────── */
+  .mark {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+    flex: none;
+  }
+
+  .mark-dot {
+    width: 0.65rem;
+    height: 0.65rem;
+    border-radius: var(--radius-pill);
+    background: var(--color-orange-bright);
+    flex: none;
+  }
+
+  .mark .display {
+    font-size: var(--text-lg);
+    white-space: nowrap;
+  }
+
+  /* ── Nav ─────────────────────────────────────────────────────────────── */
+  .nav {
+    display: flex;
+    align-items: center;
+    gap: clamp(0.85rem, 2.2vw, 2.25rem);
+    font-family: var(--font-bn);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--color-ink-soft);
+  }
+
+  .nav a {
+    position: relative;
+    padding-block: 0.7rem;
+    white-space: nowrap;
+  }
+
+  /* Underline grows from the left rather than fading in. */
+  .nav a::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0.4rem;
+    height: 1.5px;
+    border-radius: 2px;
+    background: var(--color-orange);
+    scale: 0 1;
+    transform-origin: left;
+    transition: scale var(--dur-base) var(--ease-out-soft);
+  }
+
+  .nav a:hover {
+    color: var(--color-ink);
+  }
+
+  .nav a:hover::after {
+    scale: 1 1;
+  }
+
+  /* ── Order control ───────────────────────────────────────────────────── */
+  .actions {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    flex: none;
+  }
+
+  .actions-label {
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--color-ink-soft);
+  }
+
+  .bag {
+    display: grid;
+    place-items: center;
+    /* 44px — the accessibility floor. */
+    width: 2.75rem;
+    height: 2.75rem;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: var(--color-ink);
+    color: #fff;
+    cursor: pointer;
+    transition:
+      background-color var(--dur-fast) var(--ease-out-soft),
+      transform var(--dur-fast) var(--ease-out-soft);
+  }
+
+  .bag:hover {
+    background: var(--color-orange);
+    transform: scale(1.05);
+  }
+
+  /* ── Responsive folding ──────────────────────────────────────────────── */
+  @media (max-width: 64rem) {
+    .nav-wide {
+      display: none;
+    }
+  }
+
+  @media (max-width: 48rem) {
+    .actions-label {
+      display: none;
+    }
+  }
+
+  /* Below 34rem the wordmark plus the bag button is already the whole bar. */
+  @media (max-width: 34rem) {
+    .nav {
+      display: none;
+    }
+
+    .bar {
+      padding-left: 1.1rem;
+    }
+  }
+</style>

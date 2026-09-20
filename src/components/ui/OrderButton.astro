@@ -1,0 +1,35 @@
+---
+import Button from './Button.astro';
+
+/**
+ * Every "Order Now" on the page. Carries the item id the checkout should
+ * preselect. It is a plain <button> until boot.ts binds it, so the markup is
+ * inert and costs nothing before hydration.
+ */
+interface Props {
+  /** Product or combo id from site.ts. Omit to open with nothing preselected. */
+  itemId?: string;
+  variant?: 'primary' | 'ghost';
+  label?: string;
+  magnetic?: boolean;
+  class?: string;
+}
+
+const {
+  itemId,
+  variant = 'primary',
+  label = 'অর্ডার করুন',
+  magnetic = false,
+  class: className = '',
+} = Astro.props;
+---
+
+<Button
+  variant={variant}
+  icon="arrow-right"
+  magnetic={magnetic}
+  class={className}
+  data-order-open={itemId ?? ''}
+>
+  {label}
+</Button>

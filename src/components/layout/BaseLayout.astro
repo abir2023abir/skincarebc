@@ -1,0 +1,121 @@
+---
+import { Font } from 'astro:assets';
+import { site } from '~/config/site';
+import { productImage } from '~/lib/images';
+import '~/styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const { title = site.seo.title, description = site.seo.description } = Astro.props;
+
+const canonical = new URL(Astro.url.pathname, Astro.site).href;
+const ogImage = new URL(site.seo.ogImage, Astro.site).href;
+
+/* ── Structured data ────────────────────────────────────────────────────────
+   Organization + one Product per item. No Review/AggregateRating markup is
+   emitted: the seeded reviews are placeholders, and shipping invented ratings
+   as structured data is exactly what Google penalises. Add it once the
+   reviews in site.ts are real — see README. */
+
+const organization = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: site.brandName,
+  url: Astro.site?.href,
+  logo: new URL('/icon-512.png', Astro.site).href,
+  image: ogImage,
+  description: site.seo.description,
+  telephone: site.phone,
+  address: {
+    '@type': 'PostalAddress',
+    streetAddress: site.address,
+    addressCountry: 'BD',
+  },
+  sameAs: [site.facebookPage],
+  contactPoint: {
+    '@type': 'ContactPoint',
+    contactType: 'customer service',
+    telephone: site.phone,
+    availableLanguage: ['bn', 'en'],
+  },
+};
+
+const products = site.products.map((p) => ({
+  '@context': 'https://schema.org',
+  '@type': 'Product',
+  '@id': `${canonical}#${p.id}`,
+  name: p.name,
+  description: p.shortBenefit,
+  image: new URL(productImage(p.image).src, Astro.site).href,
+  brand: { '@type': 'Brand', name: site.brandName },
+  category: 'Beauty/Skin Care',
+  offers: {
+    '@type': 'Offer',
+    url: `${canonical}#${p.id}`,
+    price: p.price,
+    priceCurrency: 'BDT',
+    availability: 'https://schema.org/InStock',
+    itemCondition: 'https://schema.org/NewCondition',
+    seller: { '@type': 'Organization', name: site.brandName },
+  },
+}));
+
+const faqPage = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: site.faq.map((f) => ({
+    '@type': 'Question',
+    name: f.q,
+    acceptedAnswer: { '@type': 'Answer', text: f.a },
+  })),
+};
+
+const jsonLd = [organization, ...products, faqPage];
+---
+
+<!doctype html>
+<html lang="bn">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- Only the two faces used above the fold are preloaded: the heavy Latin
+         display weight and the Bangla heading weight. -->
+    <Font cssVariable="--ff-display" preload={[{ weight: 800, style: 'normal' }]} />
+    <Font cssVariable="--ff-bn" preload={[{ weight: 700, style: 'normal' }]} />
+
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="bn_BD" />
+    <meta property="og:site_name" content={site.brandName} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="theme-color" content="#f0efed" />
+    <meta name="format-detection" content="telephone=no" />
+
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} is:inline />
+  </head>
+
+  <body class="grain">
+    <a class="skip-link" href="#main">মূল কনটেন্টে যান</a>
+    <slot />
+  </body>
+</html>

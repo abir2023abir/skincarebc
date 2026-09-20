@@ -110,6 +110,15 @@ export interface SiteConfig {
   phone: string;
   address: string;
   deliveryTime: string;
+  /** Hero copy. Each headline entry is rendered as its own line. */
+  hero: {
+    eyebrow: string;
+    headline: string[];
+    promise: string;
+    trust: { icon: 'wallet' | 'truck' | 'shield'; text: string }[];
+  };
+  /** Closing call-to-action copy. */
+  closing: { headline: string[]; body: string };
   products: Product[];
   combos: Combo[];
   reviews: Review[];
@@ -147,6 +156,24 @@ export const site = {
 
   // ── Tracking. Empty string = no pixel script is loaded at all. ────────────
   facebookPixelId: '',
+
+  // ── Hero & closing copy ───────────────────────────────────────────────────
+  hero: {
+    eyebrow: 'রাজশাহী, বাংলাদেশ', // «placeholder»
+    headline: ['ত্বকের যত্ন হোক', 'প্রমাণের উপর,', 'প্রতিশ্রুতির উপর নয়।'], // «placeholder»
+    promise:
+      'নারী ও পুরুষের জন্য আলাদা ফর্মুলা। প্রতিটি উপাদানের পরিমাণ লেবেলে লেখা — কারণ কী মাখছেন, সেটা জানার অধিকার আপনার।', // «placeholder»
+    trust: [
+      { icon: 'wallet', text: 'bKash-এ সহজ পেমেন্ট' },
+      { icon: 'truck', text: 'সারা দেশে দ্রুত ডেলিভারি' },
+      { icon: 'shield', text: 'ব্যাচ নম্বরসহ অরিজিনাল' },
+    ],
+  },
+
+  closing: {
+    headline: ['আজ শুরু করলে', 'ছয় সপ্তাহে', 'পার্থক্য দেখবেন।'], // «placeholder»
+    body: 'পণ্য বেছে নিন, ছোট একটা ফর্ম পূরণ করুন, বাকিটা আমরা WhatsApp-এ গুছিয়ে দেব।', // «placeholder»
+  },
 
   // ── Catalogue ─────────────────────────────────────────────────────────────
   products: [

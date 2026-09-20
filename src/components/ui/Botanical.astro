@@ -1,0 +1,74 @@
+---
+import { Image } from 'astro:assets';
+import { botanicalImage } from '~/lib/images';
+
+/**
+ * One scattered botanical cut-out. Purely decorative: empty alt, aria-hidden,
+ * pointer-events none. Position is passed in as inline custom properties so the
+ * scatter stays readable at the call site rather than hiding in a stylesheet.
+ */
+interface Props {
+  /** Filename in src/assets/botanical, e.g. "rose.png" */
+  file: string;
+  /** Rendered width. Also drives the srcset. */
+  size?: number;
+  /** CSS `top`/`left`/`right`/`bottom` values. */
+  top?: string;
+  left?: string;
+  right?: string;
+  bottom?: string;
+  rotate?: string;
+  /** Hidden below this width to keep small screens uncluttered. */
+  hideOnMobile?: boolean;
+  class?: string;
+}
+
+const {
+  file,
+  size = 110,
+  top,
+  left,
+  right,
+  bottom,
+  rotate = '0deg',
+  hideOnMobile = true,
+  class: className = '',
+} = Astro.props;
+
+const style = [
+  top && `top:${top}`,
+  left && `left:${left}`,
+  right && `right:${right}`,
+  bottom && `bottom:${bottom}`,
+  `--rot:${rotate}`,
+  `--w:${size}px`,
+]
+  .filter(Boolean)
+  .join(';');
+---
+
+<Image
+  src={botanicalImage(file)}
+  alt=""
+  aria-hidden="true"
+  class:list={['botanical', hideOnMobile && 'hide-sm', className]}
+  style={style}
+  widths={[size, size * 2]}
+  sizes={`${size}px`}
+  loading="lazy"
+/>
+
+<style>
+  .botanical {
+    width: var(--w);
+    height: auto;
+    rotate: var(--rot);
+    filter: drop-shadow(0 10px 18px rgb(19 19 19 / 0.12));
+  }
+
+  @media (max-width: 48rem) {
+    .hide-sm {
+      display: none;
+    }
+  }
+</style>

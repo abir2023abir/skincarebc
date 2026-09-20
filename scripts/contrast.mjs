@@ -2,24 +2,26 @@
  * WCAG contrast checker for the design tokens.
  * Run: node scripts/contrast.mjs
  * Exits non-zero if any required pair fails, so it can gate a build.
+ *
+ * Note on the orange: the reference design uses a vivid #F2701E behind white
+ * button labels, which is only 2.95:1 and fails AA. Interactive surfaces
+ * therefore use the deeper --color-orange; the vivid hue survives as
+ * --color-orange-bright for decorative fills that carry no text.
  */
 
 const C = {
-  bone: '#F4F1EC',
-  paper: '#FAF8F4',
-  sand: '#E9E3D8',
-  sandDeep: '#DCD4C6',
-  ink: '#1B2520',
-  ink2: '#2B3730',
-  inkSoft: '#4E5C54',
-  inkMute: '#59675F',
-  clay: '#A0462A',
-  clayDeep: '#853A22',
-  claySoft: '#C98A6E',
-  sage: '#5F7359',
-  sageSoft: '#8FA189',
-  teal: '#1F4446',
-  tealSoft: '#7FA0A1',
+  page: '#F0EFED',
+  card: '#FFFFFF',
+  beige: '#E9DDD1',
+  beigeDeep: '#DCCBBA',
+  ink: '#131313',
+  ink2: '#2E2E2E',
+  inkSoft: '#565656',
+  inkMute: '#6A6A6A',
+  orange: '#C24D10',
+  orangeDeep: '#A64109',
+  orangeBright: '#F2701E',
+  green: '#4F6349',
   white: '#FFFFFF',
 };
 
@@ -38,27 +40,23 @@ function ratio(a, b) {
 
 // [foreground, background, minimum, what it is used for]
 const pairs = [
-  ['ink', 'bone', 4.5, 'body copy on the light base'],
-  ['ink', 'paper', 4.5, 'body copy on cards'],
-  ['ink', 'sand', 4.5, 'body copy on the sand band'],
-  ['inkSoft', 'bone', 4.5, 'secondary copy'],
-  ['inkSoft', 'paper', 4.5, 'secondary copy on cards'],
-  ['inkMute', 'bone', 4.5, 'index labels, meta, captions'],
-  ['inkMute', 'paper', 4.5, 'meta on cards'],
-  ['inkMute', 'sand', 4.5, 'meta on the sand band'],
-  ['clay', 'bone', 4.5, 'accent text + text links'],
-  ['clay', 'paper', 4.5, 'accent text on cards'],
-  ['white', 'clay', 4.5, 'label inside the primary CTA'],
-  ['white', 'clayDeep', 4.5, 'label inside the hovered CTA'],
-  ['white', 'sage', 4.5, 'label on a sage chip'],
-  ['white', 'teal', 4.5, 'label on a teal chip'],
-  ['bone', 'ink', 4.5, 'copy inside the dark section'],
-  ['paper', 'ink', 4.5, 'headlines inside the dark section'],
-  ['sageSoft', 'ink', 4.5, 'her accent on dark'],
-  ['tealSoft', 'ink', 4.5, 'him accent on dark'],
-  ['claySoft', 'ink', 4.5, 'accent text on dark'],
-  ['inkSoft', 'sand', 3.0, 'hairline dividers / large text'],
-  ['white', 'ink', 4.5, 'focus ring contrast on dark'],
+  ['ink', 'page', 4.5, 'headlines on the page background'],
+  ['ink', 'card', 4.5, 'headlines and body on white cards'],
+  ['ink', 'beige', 4.5, 'copy on the beige photo cards'],
+  ['inkSoft', 'page', 4.5, 'body copy'],
+  ['inkSoft', 'card', 4.5, 'body copy on cards'],
+  ['inkSoft', 'beige', 4.5, 'body copy on beige'],
+  ['inkMute', 'page', 4.5, 'meta, captions, sizes'],
+  ['inkMute', 'card', 4.5, 'meta on cards'],
+  ['orangeDeep', 'page', 4.5, 'accent text and links on the page'],
+  ['orangeDeep', 'card', 4.5, 'accent text and links on cards'],
+  ['white', 'orange', 4.5, 'label inside the primary button'],
+  ['white', 'orangeDeep', 4.5, 'label inside the hovered button'],
+  ['white', 'ink', 4.5, 'label inside the dark button'],
+  ['ink', 'orangeBright', 4.5, 'dark label on a vivid-orange badge'],
+  ['white', 'green', 4.5, 'label on a green chip'],
+  ['page', 'ink', 4.5, 'copy inside a dark section'],
+  ['beige', 'ink', 4.5, 'headline inside a dark section'],
 ];
 
 let failed = 0;

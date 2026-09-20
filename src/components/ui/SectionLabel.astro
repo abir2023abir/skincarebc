@@ -1,0 +1,22 @@
+---
+/** Small editorial index label: a rule, then "01 / Cleanse". */
+interface Props {
+  index?: string;
+  text: string;
+  class?: string;
+}
+
+const { index, text, class: className = '' } = Astro.props;
+---
+
+<p class={`index-label ${className}`}>
+  {index && <span class="idx">{index}</span>}
+  {index && <span aria-hidden="true">/</span>}
+  <span>{text}</span>
+</p>
+
+<style>
+  .idx {
+    font-variant-numeric: tabular-nums;
+  }
+</style>

@@ -1,0 +1,57 @@
+---
+import Icon from './Icon.astro';
+import type { IconName } from './Icon.astro';
+
+interface Props {
+  variant?: 'primary' | 'ghost';
+  href?: string;
+  /** Adds a trailing icon. */
+  icon?: IconName;
+  /** Adds a leading icon. */
+  iconStart?: IconName;
+  /** Desktop-only magnetic pull. Off for anything inside a scrolling rail. */
+  magnetic?: boolean;
+  class?: string;
+  [key: string]: unknown;
+}
+
+const {
+  variant = 'primary',
+  href,
+  icon,
+  iconStart,
+  magnetic = false,
+  class: className = '',
+  ...rest
+} = Astro.props;
+
+const Tag = href ? 'a' : 'button';
+const classes = ['btn', variant === 'primary' ? 'btn-primary' : 'btn-ghost', className]
+  .filter(Boolean)
+  .join(' ');
+---
+
+<Tag
+  class={classes}
+  href={href}
+  type={href ? undefined : 'button'}
+  data-magnetic={magnetic ? '' : undefined}
+  {...rest}
+>
+  {iconStart && <Icon name={iconStart} size={18} />}
+  <slot />
+  {icon && <Icon name={icon} size={18} class="btn-icon" />}
+</Tag>
+
+<style>
+  /* The trailing arrow leans into the direction of travel on hover. */
+  .btn :global(.btn-icon) {
+    transition: translate var(--dur-fast) var(--ease-out-soft);
+  }
+
+  @media (hover: hover) {
+    .btn:hover :global(.btn-icon) {
+      translate: 3px 0;
+    }
+  }
+</style>
