@@ -29,7 +29,7 @@ const modelHero = sceneImage('model-hero.jpg');
     <div class="panel hero-panel">
       {/* Scatter is deliberately off the panel's corners and away from every
           control — nothing decorative may sit over a tap target. */}
-      <Botanical file="sprig-green.png" size={120} top="2%" left="-4%" rotate="-18deg" />
+      <Botanical file="sprig-green.png" size={110} top="-4%" left="-5%" rotate="-25deg" />
       <Botanical file="rose.png" size={104} bottom="2%" right="32%" rotate="8deg" />
       <Botanical file="monstera.png" size={96} bottom="-6%" right="-2%" rotate="-18deg" />
       <Botanical file="leaf-long.png" size={110} top="-5%" right="15%" rotate="24deg" />
@@ -37,7 +37,7 @@ const modelHero = sceneImage('model-hero.jpg');
       <div class="hero-grid">
         <!-- ── Copy ─────────────────────────────────────────────────── -->
         <div class="copy">
-          <p class="eyebrow">{site.hero.eyebrow}</p>
+          {site.hero.eyebrow && <p class="eyebrow">{site.hero.eyebrow}</p>}
 
           <h1 class="headline">
             {site.hero.headline.map((line) => <span class="line">{line}</span>)}
@@ -127,7 +127,7 @@ const modelHero = sceneImage('model-hero.jpg');
   }
 
   .headline {
-    margin-top: 1rem;
+    margin-top: 0.25rem;
     font-family: var(--font-bn);
     /* Its own scale, not --text-5xl: Bangla conjuncts set wider than Latin and
        need more leading than a heavy Latin display line. */
@@ -135,6 +135,10 @@ const modelHero = sceneImage('model-hero.jpg');
     font-weight: 700;
     line-height: 1.16;
     letter-spacing: -0.02em;
+  }
+
+  .eyebrow + .headline {
+    margin-top: 1rem;
   }
 
   .line {

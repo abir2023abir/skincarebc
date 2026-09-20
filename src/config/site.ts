@@ -155,7 +155,7 @@ export const site = {
   bkashAccountType: 'Personal' as SiteConfig['bkashAccountType'],
   phone: '01XXXXXXXXX', // REPLACE
   facebookPage: 'https://facebook.com/REPLACE_ME',
-  address: 'BUSINESS_ADDRESS, রাজশাহী', // REPLACE
+  address: 'BUSINESS_ADDRESS, ঢাকা', // REPLACE
   deliveryTime: 'ঢাকার ভিতরে ২৪ ঘণ্টা, বাইরে ২–৩ দিন', // «placeholder»
 
   // ── Money ─────────────────────────────────────────────────────────────────
@@ -178,7 +178,7 @@ export const site = {
 
   // ── Hero & closing copy ───────────────────────────────────────────────────
   hero: {
-    eyebrow: 'রাজশাহী, বাংলাদেশ', // «placeholder»
+    eyebrow: '',
     headline: ['ত্বকের যত্ন হোক', 'প্রমাণের উপর,', 'প্রতিশ্রুতির উপর নয়।'], // «placeholder»
     promise:
       'নারী ও পুরুষের জন্য আলাদা ফর্মুলা। প্রতিটি উপাদানের পরিমাণ লেবেলে লেখা — কারণ কী মাখছেন, সেটা জানার অধিকার আপনার।', // «placeholder»
