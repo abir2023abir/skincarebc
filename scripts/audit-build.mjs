@@ -9,7 +9,7 @@
  */
 
 import { gzipSync, brotliCompressSync } from 'node:zlib';
-import { readFile, readdir, stat } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, extname, join, relative } from 'node:path';
 

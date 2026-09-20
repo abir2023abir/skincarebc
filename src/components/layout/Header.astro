@@ -41,6 +41,19 @@ import Icon from '~/components/ui/Icon.astro';
 </header>
 
 <style>
+  /* The sentinel needs real height: a zero-height element sitting at y=0 never
+     intersects a root shrunk by a negative top margin, so the header would come
+     up already in its compact state. Absolutely positioned so it measures the
+     first 150px of the document without occupying any layout space. */
+  [data-header-sentinel] {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1px;
+    height: 150px;
+    pointer-events: none;
+  }
+
   .hdr {
     position: fixed;
     inset: 0 0 auto;

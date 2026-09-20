@@ -42,8 +42,10 @@ function initChrome(): void {
       header?.toggleAttribute('data-stuck', past);
       bar?.toggleAttribute('data-visible', past);
     },
-    // Fires once the sentinel has passed roughly a hero's worth of scroll.
-    { rootMargin: '-140px 0px 0px 0px' },
+    // The sentinel is a 150px-tall absolutely-positioned strip at the top of
+    // the document (see Header.astro), so "no longer intersecting" means the
+    // reader has scrolled past the top of the hero.
+    { threshold: 0 },
   ).observe(sentinel);
 }
 

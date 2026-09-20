@@ -142,7 +142,10 @@ export const site = {
   // ── Contact & payment ─────────────────────────────────────────────────────
   whatsappNumber: '8801XXXXXXXXX', // REPLACE — international format, no + and no spaces
   bkashNumber: '01XXXXXXXXX', // REPLACE
-  bkashAccountType: 'Personal', // 'Personal' shows "Send Money"; 'Merchant' shows "Payment"
+  // Annotated rather than left to inference: `satisfies` would narrow this to
+  // the literal 'Personal', and then every `=== 'Merchant'` branch elsewhere
+  // becomes a type error instead of a runtime choice.
+  bkashAccountType: 'Personal' as SiteConfig['bkashAccountType'],
   phone: '01XXXXXXXXX', // REPLACE
   facebookPage: 'https://facebook.com/REPLACE_ME',
   address: 'BUSINESS_ADDRESS, রাজশাহী', // REPLACE
@@ -354,6 +357,8 @@ export const site = {
     },
   ],
 
+  // Annotated so each line is a Partial<Record<RoutineStepId, string>> and can
+  // be indexed by any step id; inference would give each line only its own keys.
   routineMap: {
     // Leave a step out and the routine renders a soft "coming soon" tile for it.
     her: {
@@ -364,7 +369,7 @@ export const site = {
       cleanse: 'oil-control-face-wash',
       protect: 'after-shave-calm-balm',
     },
-  },
+  } as SiteConfig['routineMap'],
 
   // ── Social proof ──────────────────────────────────────────────────────────
   reviews: [
