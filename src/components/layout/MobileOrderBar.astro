@@ -1,0 +1,88 @@
+---
+import { site } from '~/config/site';
+import Icon from '~/components/ui/Icon.astro';
+
+/**
+ * Fixed bottom bar on phones. Hidden until the reader is past the hero —
+ * boot.ts flips [data-visible] from the same IntersectionObserver that drives
+ * the header, so there is no second scroll listener.
+ *
+ * It is inert until then: translated off-screen AND `visibility: hidden`, so it
+ * can never steal a tap or a tab stop while it is invisible.
+ */
+
+const waHref = `https://wa.me/${site.whatsappNumber.replace(/\D/g, '')}`;
+---
+
+<div class="bar" data-mobile-bar>
+  <button type="button" class="btn btn-primary order" data-order-open="">
+    <span>অর্ডার করুন</span>
+    <Icon name="arrow-right" size={18} />
+  </button>
+
+  <a
+    class="wa"
+    href={waHref}
+    target="_blank"
+    rel="noopener noreferrer"
+    aria-label="WhatsApp-এ মেসেজ দিন"
+  >
+    <Icon name="chat" size={22} />
+  </a>
+</div>
+
+<style>
+  .bar {
+    position: fixed;
+    inset: auto 0 0;
+    z-index: 45;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.7rem var(--spacing-gutter);
+    /* Clears the iOS home indicator. */
+    padding-bottom: calc(0.7rem + env(safe-area-inset-bottom, 0px));
+    background: color-mix(in oklab, var(--color-card) 92%, transparent);
+    backdrop-filter: blur(16px) saturate(120%);
+    border-top: 1px solid var(--color-line);
+
+    translate: 0 110%;
+    visibility: hidden;
+    transition:
+      translate var(--dur-base) var(--ease-out-soft),
+      visibility var(--dur-base);
+  }
+
+  .bar[data-visible] {
+    translate: 0 0;
+    visibility: visible;
+  }
+
+  /* Desktop has the header CTA and the in-page buttons; this would be noise. */
+  @media (min-width: 48rem) {
+    .bar {
+      display: none;
+    }
+  }
+
+  .order {
+    flex: 1;
+  }
+
+  .wa {
+    display: grid;
+    place-items: center;
+    /* 48px tap target. */
+    width: 3rem;
+    height: 3rem;
+    flex: none;
+    border-radius: var(--radius-sm);
+    background: var(--color-ink);
+    color: #fff;
+    transition: background-color var(--dur-fast) var(--ease-out-soft);
+  }
+
+  .wa:hover {
+    background: var(--color-ink-2);
+  }
+</style>

@@ -359,9 +359,15 @@
     translate: 0 0;
   }
 
-  /* Edge-to-edge horizontal rails that still respect the page gutter. */
+  /* Edge-to-edge horizontal rails that still respect the page gutter.
+     `contain: paint` is load-bearing, not a micro-optimisation: without it a
+     scroll container's scrollable overflow region still propagates into the
+     document's, so a rail of six review cards made the whole page scroll
+     sideways by ~500px. overflow/clip on the rail or any ancestor does not
+     stop that; containment does. */
   .rail {
     display: flex;
+    contain: paint;
     gap: 1.25rem;
     overflow-x: auto;
     scroll-snap-type: x mandatory;

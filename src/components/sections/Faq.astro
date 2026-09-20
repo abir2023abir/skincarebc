@@ -1,0 +1,160 @@
+---
+import { site } from '~/config/site';
+import Icon from '~/components/ui/Icon.astro';
+
+/**
+ * FAQ accordion built on <details>/<summary>.
+ *
+ * Native disclosure gives correct expanded/collapsed semantics, keyboard
+ * operation and find-in-page for free. `name="faq"` makes the group exclusive
+ * (one open at a time) without a line of JavaScript; browsers that do not
+ * support it simply allow several open, which is a fine degradation.
+ *
+ * The open/close animation uses interpolate-size + a grid-rows transition so
+ * height animates from a real `auto`, guarded by @supports.
+ */
+---
+
+<section class="section faq" id="faq">
+  <div class="wrap grid">
+    <header class="head">
+      <p class="eyebrow">সাধারণ প্রশ্ন</p>
+      <h2 class="title display">Questions, answered</h2>
+      <p class="sub">
+        যা জিজ্ঞাসা করা হয় সবচেয়ে বেশি। আরও কিছু জানার থাকলে WhatsApp-এ মেসেজ দিন।
+      </p>
+    </header>
+
+    <div class="list">
+      {
+        site.faq.map((item, i) => (
+          <details class="item" name="faq" open={i === 0}>
+            <summary class="q">
+              <span>{item.q}</span>
+              <span class="mark" aria-hidden="true">
+                <Icon name="plus" size={18} />
+              </span>
+            </summary>
+            <div class="a-wrap">
+              <p class="a">{item.a}</p>
+            </div>
+          </details>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .grid {
+    display: grid;
+    gap: clamp(1.5rem, 3vw, 3rem);
+    align-items: start;
+  }
+
+  @media (min-width: 62rem) {
+    .grid {
+      grid-template-columns: minmax(0, 0.75fr) minmax(0, 1fr);
+    }
+
+    .head {
+      position: sticky;
+      top: 6rem;
+    }
+  }
+
+  .title {
+    margin-top: 0.75rem;
+    font-size: var(--text-3xl);
+  }
+
+  .sub {
+    margin-top: 0.9rem;
+    max-width: 24rem;
+    color: var(--color-ink-soft);
+  }
+
+  /* ── Items ───────────────────────────────────────────────────────────── */
+  .list {
+    display: grid;
+    gap: 0.6rem;
+  }
+
+  .item {
+    background: var(--color-card);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+  }
+
+  .q {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    /* 44px tap target. */
+    min-height: 3.5rem;
+    padding: 1rem clamp(1rem, 2vw, 1.5rem);
+    font-size: var(--text-base);
+    font-weight: 700;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .q::-webkit-details-marker {
+    display: none;
+  }
+
+  .mark {
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    flex: none;
+    border-radius: var(--radius-pill);
+    background: var(--color-page);
+    transition:
+      rotate var(--dur-base) var(--ease-out-soft),
+      background-color var(--dur-fast) var(--ease-out-soft),
+      color var(--dur-fast) var(--ease-out-soft);
+  }
+
+  .item[open] .mark {
+    rotate: 45deg;
+    background: var(--color-orange);
+    color: #fff;
+  }
+
+  .a-wrap {
+    padding: 0 clamp(1rem, 2vw, 1.5rem) 1.25rem;
+  }
+
+  .a {
+    max-width: 38rem;
+    font-size: var(--text-sm);
+    line-height: 1.8;
+    color: var(--color-ink-soft);
+  }
+
+  /* Animate the disclosure from a real auto height where supported. */
+  @supports (interpolate-size: allow-keywords) {
+    :root {
+      interpolate-size: allow-keywords;
+    }
+
+    .item::details-content {
+      block-size: 0;
+      opacity: 0;
+      overflow: hidden;
+      transition:
+        block-size var(--dur-base) var(--ease-out-soft),
+        content-visibility var(--dur-base) allow-discrete,
+        opacity var(--dur-base) var(--ease-out-soft);
+    }
+
+    .item[open]::details-content {
+      block-size: auto;
+      opacity: 1;
+    }
+  }
+</style>

@@ -1,0 +1,77 @@
+---
+import { site } from '~/config/site';
+import ProductCard from '~/components/ui/ProductCard.astro';
+import Botanical from '~/components/ui/Botanical.astro';
+
+/** "Best Selling Product" band — oversized centred display heading, then the
+    catalogue. Tones alternate so the row does not read as four clones. */
+
+const tones = ['beige', 'sage', 'sand', 'beige'] as const;
+---
+
+<section class="section bestsellers" id="products">
+  <Botanical file="leaf-autumn.png" size={108} top="6%" left="1%" rotate="18deg" />
+  <Botanical file="anemone.png" size={94} top="12%" right="1%" rotate="-10deg" />
+
+  <div class="wrap">
+    <header class="head">
+      <h2 class="title display">Best Selling Product</h2>
+      <p class="sub">
+        প্রতিদিনের রুটিনের জন্য যেগুলো সবচেয়ে বেশি ফিরে আসে — নারী ও পুরুষ, দুজনের জন্যই।
+      </p>
+    </header>
+
+    <div class="grid">
+      {
+        site.products.map((product, i) => (
+          <ProductCard product={product} tone={tones[i % tones.length]} />
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .bestsellers {
+    position: relative;
+    /* Decoration may hang off a panel, never off the page. */
+    overflow-x: clip;
+  }
+
+  .head {
+    max-width: 44rem;
+    margin-inline: auto;
+    margin-bottom: clamp(2rem, 4vw, 3rem);
+    text-align: center;
+  }
+
+  .title {
+    font-size: var(--text-4xl);
+  }
+
+  .sub {
+    max-width: 32rem;
+    margin-inline: auto;
+    margin-top: 0.9rem;
+    color: var(--color-ink-soft);
+  }
+
+  .grid {
+    display: grid;
+    gap: clamp(0.75rem, 1.6vw, 1.25rem);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (min-width: 62rem) {
+    .grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+
+  /* One column below 26rem — two cards are too cramped to read at 360px. */
+  @media (max-width: 26rem) {
+    .grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>

@@ -1,0 +1,96 @@
+---
+import { Image } from 'astro:assets';
+import { sceneImage } from '~/lib/images';
+import Button from '~/components/ui/Button.astro';
+import OrderButton from '~/components/ui/OrderButton.astro';
+import Botanical from '~/components/ui/Botanical.astro';
+
+/** The reference's split promise card: copy left, model card right. */
+---
+
+<section class="section-tight promise-section">
+  <div class="wrap">
+    <div class="grid">
+      <div class="copy">
+        <p class="eyebrow">আমাদের কথা</p>
+
+        <h2 class="title">
+          যা বলি, লেবেলেও<br />
+          সেটাই লেখা থাকে
+        </h2>
+
+        <p class="body">
+          বাংলাদেশে স্কিনকেয়ারের সবচেয়ে বড় সমস্যা তথ্যের অভাব — কোন উপাদান কতটুকু আছে,
+          বেশিরভাগ প্যাকেটে সেটা লেখাই থাকে না। আমরা প্রতিটি সক্রিয় উপাদানের শতাংশ লিখে দিই,
+          ব্যাচ নম্বর আর মেয়াদসহ পাঠাই, আর যা করতে পারি না সেটার প্রতিশ্রুতি দিই না।
+        </p>
+
+        <div class="actions">
+          <OrderButton magnetic label="অর্ডার করুন" />
+          <Button variant="ghost" href="#ingredients">উপাদান জানুন</Button>
+        </div>
+      </div>
+
+      <div class="media">
+        <Botanical file="sunflower.png" size={92} top="-7%" left="-5%" rotate="-14deg" />
+        <Image
+          src={sceneImage('model-council.png')}
+          alt="একজন নারী ত্বকের যত্ন নিচ্ছেন"
+          widths={[420, 760]}
+          sizes="(max-width: 60rem) 92vw, 46vw"
+          loading="lazy"
+        />
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .promise-section {
+    position: relative;
+  }
+
+  .grid {
+    display: grid;
+    gap: clamp(1.5rem, 3vw, 3rem);
+    align-items: center;
+  }
+
+  @media (min-width: 60rem) {
+    .grid {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 0.92fr);
+    }
+  }
+
+  .title {
+    margin-top: 0.75rem;
+    font-size: var(--text-3xl);
+    line-height: 1.22;
+  }
+
+  .body {
+    margin-top: 1.1rem;
+    max-width: 32rem;
+    color: var(--color-ink-soft);
+  }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: clamp(1.5rem, 3vw, 2rem);
+  }
+
+  .media {
+    position: relative;
+    border-radius: var(--radius-xl);
+    overflow: visible;
+  }
+
+  .media :global(img:not(.botanical)) {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border-radius: var(--radius-xl);
+  }
+</style>

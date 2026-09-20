@@ -1,0 +1,142 @@
+---
+import { site } from '~/config/site';
+import Icon from '~/components/ui/Icon.astro';
+import type { IconName } from '~/components/ui/Icon.astro';
+
+/** The four-step ordering explainer. Each step is drawn, not photographed. */
+
+const steps: { icon: IconName; title: string; body: string }[] = [
+  {
+    icon: 'bag',
+    title: 'প্রোডাক্ট বেছে নিন',
+    body: 'যেকোনো “অর্ডার করুন” বাটনে চাপ দিন — ফর্মে প্রোডাক্টটি আগে থেকেই বসানো থাকবে।',
+  },
+  {
+    icon: 'face',
+    title: 'ছোট ফর্মটি পূরণ করুন',
+    body: 'নাম, মোবাইল নম্বর আর ঠিকানা। ডেলিভারি চার্জসহ মোট টাকা সাথে সাথে দেখাবে।',
+  },
+  {
+    icon: 'wallet',
+    title: `bKash-এ টাকা পাঠান`,
+    body: `দেখানো নাম্বারে মোট টাকা ${site.bkashAccountType === 'Personal' ? 'Send Money' : 'Payment'} করুন। নাম্বারটি এক ট্যাপে কপি করা যায়।`,
+  },
+  {
+    icon: 'camera',
+    title: 'স্ক্রিনশট পাঠান',
+    body: 'WhatsApp খুলে যাবে অর্ডারের সব তথ্যসহ। শুধু ট্রানজেকশনের স্ক্রিনশটটি পাঠিয়ে দিন।',
+  },
+];
+---
+
+<section class="section-tight how" id="how-to-order">
+  <div class="wrap">
+    <div class="panel shell">
+      <header class="head">
+        <p class="eyebrow">অর্ডার প্রক্রিয়া</p>
+        <h2 class="title display">How to order</h2>
+        <p class="sub">চারটি ধাপ, দুই মিনিট। কোনো অ্যাকাউন্ট খুলতে হয় না।</p>
+      </header>
+
+      <ol class="steps">
+        {
+          steps.map((step, i) => (
+            <li class="step">
+              <span class="ring" aria-hidden="true">
+                <Icon name={step.icon} size={22} />
+              </span>
+              <p class="num display" aria-hidden="true">{String(i + 1).padStart(2, '0')}</p>
+              <h3 class="step-title">{step.title}</h3>
+              <p class="step-body">{step.body}</p>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+  </div>
+</section>
+
+<style>
+  .shell {
+    padding: clamp(1.5rem, 3.5vw, 3rem);
+  }
+
+  .head {
+    max-width: 36rem;
+    margin-bottom: clamp(1.75rem, 3.5vw, 2.5rem);
+  }
+
+  .title {
+    margin-top: 0.75rem;
+    font-size: var(--text-3xl);
+  }
+
+  .sub {
+    margin-top: 0.75rem;
+    color: var(--color-ink-soft);
+  }
+
+  /* ── Steps ───────────────────────────────────────────────────────────── */
+  .steps {
+    display: grid;
+    gap: clamp(1.25rem, 2.5vw, 2rem);
+    counter-reset: step;
+  }
+
+  @media (min-width: 46rem) {
+    .steps {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 72rem) {
+    .steps {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    /* A hairline between steps rather than four boxed cards. */
+    .step + .step {
+      padding-left: clamp(1rem, 2vw, 1.75rem);
+      border-left: 1px solid var(--color-line);
+    }
+  }
+
+  .step {
+    display: grid;
+    gap: 0.4rem;
+    align-content: start;
+  }
+
+  .ring {
+    display: grid;
+    place-items: center;
+    width: 3rem;
+    height: 3rem;
+    margin-bottom: 0.5rem;
+    border-radius: var(--radius-pill);
+    background: var(--color-page);
+    color: var(--color-ink);
+  }
+
+  .step:nth-child(3) .ring {
+    background: var(--color-orange);
+    color: #fff;
+  }
+
+  .num {
+    font-size: var(--text-xs);
+    letter-spacing: 0.1em;
+    color: var(--color-ink-mute);
+  }
+
+  .step-title {
+    font-size: var(--text-base);
+    font-weight: 700;
+  }
+
+  .step-body {
+    font-size: var(--text-sm);
+    line-height: 1.65;
+    color: var(--color-ink-soft);
+  }
+</style>

@@ -1,0 +1,145 @@
+---
+import { site, orderableById } from '~/config/site';
+import Stars from '~/components/ui/Stars.astro';
+import Icon from '~/components/ui/Icon.astro';
+---
+
+<section class="section reviews" id="reviews">
+  <div class="wrap head-wrap">
+    <header class="head">
+      <div>
+        <p class="eyebrow">রিভিউ</p>
+        <h2 class="title display">What people say</h2>
+      </div>
+      <p class="hint">
+        <Icon name="arrow-right" size={15} />
+        <span>পাশে স্ক্রল করুন</span>
+      </p>
+    </header>
+  </div>
+
+  <div class="wrap">
+    <ul class="rail" tabindex="0" role="group" aria-label="ক্রেতাদের রিভিউ">
+      {
+        site.reviews.map((review) => {
+          const item = orderableById(review.productId);
+          return (
+            <li class="rcard">
+              <Stars rating={review.rating} />
+              <p class="rtext">{review.text}</p>
+
+              <footer class="rfoot">
+                <p class="rname">{review.name}</p>
+                <p class="rmeta">
+                  <Icon name="pin" size={13} />
+                  <span>{review.district}</span>
+                </p>
+                {item && <p class="rproduct en">{item.name}</p>}
+              </footer>
+            </li>
+          );
+        })
+      }
+    </ul>
+  </div>
+
+  <div class="wrap">
+    <p class="disclaimer">
+      উপরের রিভিউগুলো এখন প্লেসহোল্ডার — আসল ক্রেতার মতামত দিয়ে বদলে দিতে হবে।
+    </p>
+  </div>
+</section>
+
+<style>
+  .head-wrap {
+    margin-bottom: clamp(1.5rem, 3vw, 2.25rem);
+  }
+
+  .head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .title {
+    margin-top: 0.75rem;
+    font-size: var(--text-4xl);
+  }
+
+  .hint {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: var(--text-xs);
+    color: var(--color-ink-mute);
+  }
+
+  /* ── Rail ────────────────────────────────────────────────────────────── */
+  .rail {
+    padding-block: 0.5rem;
+  }
+
+  /* The rail is focusable so it can be scrolled from the keyboard; give it a
+     visible ring when it is. */
+  .rail:focus-visible {
+    outline: 2px solid var(--color-orange-deep);
+    outline-offset: 4px;
+    border-radius: var(--radius-md);
+  }
+
+  .rcard {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    width: min(80vw, 21rem);
+    padding: clamp(1.1rem, 2.4vw, 1.6rem);
+    background: var(--color-card);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+  }
+
+  .rtext {
+    font-size: var(--text-sm);
+    line-height: 1.75;
+    color: var(--color-ink-soft);
+  }
+
+  .rfoot {
+    margin-top: auto;
+    padding-top: 0.9rem;
+    border-top: 1px solid var(--color-line);
+  }
+
+  .rname {
+    font-size: var(--text-sm);
+    font-weight: 700;
+  }
+
+  .rmeta {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-top: 0.2rem;
+    font-size: var(--text-xs);
+    color: var(--color-ink-mute);
+  }
+
+  .rmeta :global(svg) {
+    flex: none;
+  }
+
+  .rproduct {
+    margin-top: 0.5rem;
+    font-size: var(--text-xs);
+    font-weight: 500;
+    color: var(--color-orange-deep);
+  }
+
+  .disclaimer {
+    margin-top: 1.25rem;
+    font-size: var(--text-xs);
+    color: var(--color-ink-mute);
+  }
+</style>

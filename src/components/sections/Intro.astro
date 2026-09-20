@@ -1,0 +1,217 @@
+---
+import { site } from '~/config/site';
+import Icon from '~/components/ui/Icon.astro';
+import type { IconName } from '~/components/ui/Icon.astro';
+
+/**
+ * The reference's second band: a short greeting card on the left, then three
+ * circled icons on the right.
+ *
+ * Worth recording — the original brief banned "identical three-column feature
+ * cards with icons in circles". The reference the client later supplied has
+ * exactly that pattern, and the reference wins. Softened a little so it is not
+ * three identical boxes: no card chrome, a hairline between each, and the
+ * circles alternate fill.
+ */
+
+const features: { icon: IconName; title: string; body: string }[] = [
+  {
+    icon: 'leaf',
+    title: 'ইচ্ছাকৃতভাবে তৈরি', // «placeholder»
+    body: 'প্রতিটি উপাদানের পরিমাণ লেবেলে লেখা।',
+  },
+  {
+    icon: 'droplet',
+    title: 'মৃদু ফর্মুলা', // «placeholder»
+    body: 'অ্যালকোহল ও কড়া সুগন্ধি ছাড়া।',
+  },
+  {
+    icon: 'face',
+    title: 'সব ধরনের ত্বকে', // «placeholder»
+    body: 'তৈলাক্ত, শুষ্ক ও সংবেদনশীল — সবার জন্য।',
+  },
+];
+---
+
+<section class="section-tight">
+  <div class="wrap intro">
+    <!-- ── Greeting ──────────────────────────────────────────────────── -->
+    <div class="panel greet">
+      <h2 class="greet-title">
+        <span class="display">Hey, Hi, Hello</span>
+        <span class="dash" aria-hidden="true">—</span>
+      </h2>
+      <p class="greet-body">
+        আমরা <strong class="en">{site.brandName}</strong>। রাজশাহী থেকে শুরু, এখন সারা দেশে।
+        ত্বকের যত্নকে আমরা জটিল বানাই না — যা দরকার, ঠিক ততটুকু।
+      </p>
+
+      <a class="greet-link" href="#for-her">
+        <span>প্রোডাক্ট দেখুন</span>
+        <span class="greet-arrow" aria-hidden="true"><Icon name="arrow-up-right" size={16} /></span>
+      </a>
+    </div>
+
+    <!-- ── Three promises ────────────────────────────────────────────── -->
+    <div class="panel feats">
+      <h2 class="feats-title">
+        যে তিনটি কথা আমরা প্রতিবার রাখি
+      </h2>
+
+      <ul class="feat-list">
+        {
+          features.map((f, i) => (
+            <li class="feat">
+              <span class:list={['feat-ring', i === 1 && 'feat-ring-fill']} aria-hidden="true">
+                <Icon name={f.icon} size={22} />
+              </span>
+              <p class="feat-title">{f.title}</p>
+              <p class="feat-body">{f.body}</p>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </div>
+</section>
+
+<style>
+  .intro {
+    display: grid;
+    gap: clamp(1rem, 2vw, 1.5rem);
+  }
+
+  @media (min-width: 60rem) {
+    .intro {
+      grid-template-columns: minmax(0, 0.62fr) minmax(0, 1fr);
+      align-items: stretch;
+    }
+  }
+
+  /* ── Greeting card ───────────────────────────────────────────────────── */
+  .greet {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: clamp(1.5rem, 3vw, 2.25rem);
+  }
+
+  .greet-title {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    font-size: var(--text-2xl);
+  }
+
+  .dash {
+    color: var(--color-orange);
+  }
+
+  .greet-body {
+    color: var(--color-ink-soft);
+  }
+
+  .greet-body strong {
+    color: var(--color-ink);
+    font-weight: 800;
+  }
+
+  .greet-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: auto;
+    /* 44px tap target. */
+    min-height: 2.75rem;
+    font-size: var(--text-sm);
+    font-weight: 700;
+  }
+
+  .greet-arrow {
+    display: grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--color-line-strong);
+    transition:
+      background-color var(--dur-fast) var(--ease-out-soft),
+      color var(--dur-fast) var(--ease-out-soft),
+      border-color var(--dur-fast) var(--ease-out-soft);
+  }
+
+  .greet-link:hover .greet-arrow {
+    background: var(--color-ink);
+    border-color: var(--color-ink);
+    color: #fff;
+  }
+
+  /* ── Feature row ─────────────────────────────────────────────────────── */
+  .feats {
+    padding: clamp(1.5rem, 3vw, 2.25rem);
+  }
+
+  .feats-title {
+    max-width: 26rem;
+    margin-inline: auto;
+    margin-bottom: clamp(1.5rem, 3vw, 2rem);
+    font-size: var(--text-xl);
+    text-align: center;
+  }
+
+  .feat-list {
+    display: grid;
+    gap: 1.25rem;
+  }
+
+  @media (min-width: 40rem) {
+    .feat-list {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0;
+    }
+
+    /* Hairline between, not three boxed cards. */
+    .feat + .feat {
+      border-left: 1px solid var(--color-line);
+    }
+
+    .feat {
+      padding-inline: clamp(0.75rem, 2vw, 1.5rem);
+    }
+  }
+
+  .feat {
+    display: grid;
+    justify-items: center;
+    gap: 0.5rem;
+    text-align: center;
+  }
+
+  .feat-ring {
+    display: grid;
+    place-items: center;
+    width: 3.25rem;
+    height: 3.25rem;
+    margin-bottom: 0.35rem;
+    border-radius: var(--radius-pill);
+    background: var(--color-page);
+    color: var(--color-ink);
+  }
+
+  .feat-ring-fill {
+    background: var(--color-orange);
+    color: #fff;
+  }
+
+  .feat-title {
+    font-size: var(--text-sm);
+    font-weight: 700;
+  }
+
+  .feat-body {
+    font-size: var(--text-sm);
+    line-height: 1.6;
+    color: var(--color-ink-mute);
+  }
+</style>

@@ -1,0 +1,252 @@
+---
+import { Image } from 'astro:assets';
+import { site, productById } from '~/config/site';
+import { productImage } from '~/lib/images';
+import { formatBdt } from '~/lib/formatBdt';
+import { savingsPercent } from '~/lib/pricing';
+import OrderButton from '~/components/ui/OrderButton.astro';
+import Botanical from '~/components/ui/Botanical.astro';
+import Icon from '~/components/ui/Icon.astro';
+---
+
+<section class="section combos" id="combos">
+  <Botanical file="rose.png" size={96} top="10%" right="2%" rotate="-16deg" />
+  <Botanical file="sprig-dried.png" size={112} bottom="8%" left="1%" rotate="16deg" />
+
+  <div class="wrap">
+    <header class="head">
+      <p class="eyebrow">কম্বো অফার</p>
+      <h2 class="title display">Buy the set, pay less</h2>
+      <p class="sub">একসাথে নিলে দামও কম, আর রুটিনটাও সম্পূর্ণ হয়।</p>
+    </header>
+
+    <div class="grid">
+      {
+        site.combos.map((combo) => {
+          const products = combo.productIds
+            .map((id) => productById(id))
+            .filter((p) => p !== undefined);
+          const saved = combo.oldPrice - combo.price;
+          const percent = savingsPercent(combo.price, combo.oldPrice);
+
+          return (
+            <article class="combo panel" id={combo.id}>
+              <div class="combo-top">
+                <div>
+                  <p class="combo-line">{combo.line === 'her' ? 'For Her' : 'For Him'}</p>
+                  <h3 class="combo-name display">{combo.name}</h3>
+                </div>
+                {combo.badge && <p class="badge">{combo.badge}</p>}
+              </div>
+
+              <p class="combo-benefit">{combo.shortBenefit}</p>
+
+              <ul class="combo-items">
+                {products.map((p) => (
+                  <li class="combo-item">
+                    <span class="combo-thumb">
+                      <Image
+                        src={productImage(p.image)}
+                        alt=""
+                        aria-hidden="true"
+                        widths={[96, 192]}
+                        sizes="96px"
+                        loading="lazy"
+                      />
+                    </span>
+                    <span class="combo-text">
+                      <span class="combo-item-name en">{p.name}</span>
+                      <span class="combo-item-meta">
+                        {p.size} · আলাদা কিনলে {formatBdt(p.price)}
+                      </span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+
+              <div class="combo-foot">
+                <p class="combo-price">
+                  <span class="now">{formatBdt(combo.price)}</span>
+                  <s class="was">
+                    {formatBdt(combo.oldPrice)}
+                    <span class="sr-only">— আলাদা কিনলে</span>
+                  </s>
+                </p>
+                <p class="combo-saved">
+                  <Icon name="spark" size={15} />
+                  <span>
+                    {formatBdt(saved)} সাশ্রয় ({percent}%)
+                  </span>
+                </p>
+              </div>
+
+              <OrderButton itemId={combo.id} magnetic class="combo-cta" label="কম্বো অর্ডার করুন" />
+            </article>
+          );
+        })
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .combos {
+    position: relative;
+    overflow-x: clip;
+  }
+
+  .head {
+    max-width: 42rem;
+    margin-inline: auto;
+    margin-bottom: clamp(1.75rem, 3.5vw, 2.5rem);
+    text-align: center;
+  }
+
+  .title {
+    margin-top: 0.75rem;
+    font-size: var(--text-4xl);
+  }
+
+  .sub {
+    max-width: 28rem;
+    margin-inline: auto;
+    margin-top: 0.9rem;
+    color: var(--color-ink-soft);
+  }
+
+  .grid {
+    display: grid;
+    gap: clamp(0.75rem, 1.6vw, 1.25rem);
+  }
+
+  @media (min-width: 52rem) {
+    .grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  /* ── Card ────────────────────────────────────────────────────────────── */
+  .combo {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    padding: clamp(1.25rem, 2.6vw, 2rem);
+  }
+
+  .combo-top {
+    display: flex;
+    align-items: start;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .combo-line {
+    font-size: var(--text-xs);
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-ink-mute);
+  }
+
+  .combo-name {
+    margin-top: 0.3rem;
+    font-size: var(--text-2xl);
+  }
+
+  .combo-benefit {
+    font-size: var(--text-sm);
+    color: var(--color-ink-soft);
+  }
+
+  /* ── Contents ────────────────────────────────────────────────────────── */
+  .combo-items {
+    display: grid;
+    gap: 0.5rem;
+    padding-block: 0.9rem;
+    border-block: 1px solid var(--color-line);
+  }
+
+  .combo-item {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+  }
+
+  .combo-thumb {
+    display: grid;
+    place-items: center;
+    width: 3rem;
+    height: 3rem;
+    flex: none;
+    border-radius: var(--radius-sm);
+    background: var(--color-beige);
+    overflow: hidden;
+  }
+
+  .combo-thumb :global(img) {
+    width: 60%;
+    height: auto;
+  }
+
+  .combo-text {
+    display: grid;
+    gap: 0.1rem;
+    min-width: 0;
+  }
+
+  .combo-item-name {
+    font-size: var(--text-sm);
+    font-weight: 700;
+  }
+
+  .combo-item-meta {
+    font-size: var(--text-xs);
+    color: var(--color-ink-mute);
+  }
+
+  /* ── Price ───────────────────────────────────────────────────────────── */
+  .combo-foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-top: auto;
+  }
+
+  .combo-price {
+    display: flex;
+    align-items: baseline;
+    gap: 0.55rem;
+    font-family: var(--font-display);
+  }
+
+  .now {
+    font-size: var(--text-2xl);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+  }
+
+  .was {
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--color-ink-mute);
+  }
+
+  .combo-saved {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: var(--text-xs);
+    font-weight: 700;
+    color: var(--color-orange-deep);
+  }
+
+  .combo-saved :global(svg) {
+    flex: none;
+  }
+
+  .combo-cta {
+    width: 100%;
+  }
+</style>

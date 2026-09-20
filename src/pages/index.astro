@@ -1,12 +1,45 @@
 ---
 import BaseLayout from '~/components/layout/BaseLayout.astro';
 import Header from '~/components/layout/Header.astro';
+import Footer from '~/components/layout/Footer.astro';
+import MobileOrderBar from '~/components/layout/MobileOrderBar.astro';
+
 import Hero from '~/components/sections/Hero.astro';
+import Intro from '~/components/sections/Intro.astro';
+import BestSellers from '~/components/sections/BestSellers.astro';
+import HerHim from '~/components/sections/HerHim.astro';
+import Promise from '~/components/sections/Promise.astro';
+import Showcase from '~/components/sections/Showcase.astro';
+import ProductStory from '~/components/sections/ProductStory.astro';
+import Ingredients from '~/components/sections/Ingredients.astro';
+import Routine from '~/components/sections/Routine.astro';
+import Combos from '~/components/sections/Combos.astro';
+import Reviews from '~/components/sections/Reviews.astro';
+import HowToOrder from '~/components/sections/HowToOrder.astro';
+import Faq from '~/components/sections/Faq.astro';
+import FinalCta from '~/components/sections/FinalCta.astro';
 ---
 
 <BaseLayout>
   <Header />
+
   <main id="main">
     <Hero />
+    <Intro />
+    <BestSellers />
+    <HerHim />
+    <Promise />
+    <Showcase />
+    <ProductStory />
+    <Ingredients />
+    <Routine />
+    <Combos />
+    <Reviews />
+    <HowToOrder />
+    <Faq />
+    <FinalCta />
   </main>
+
+  <Footer />
+  <MobileOrderBar />
 </BaseLayout>

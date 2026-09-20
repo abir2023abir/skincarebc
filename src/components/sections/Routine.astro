@@ -1,0 +1,336 @@
+---
+import { Image } from 'astro:assets';
+import { site, productById } from '~/config/site';
+import { productImage } from '~/lib/images';
+import { formatBdt } from '~/lib/formatBdt';
+import Icon from '~/components/ui/Icon.astro';
+
+/**
+ * Three-step routine builder, with a her/him toggle.
+ *
+ * Both lines are rendered and the checked radio reveals one — again zero JS.
+ * A step with no product in `routineMap` renders a dashed "coming soon" tile
+ * rather than being dropped, so the three-step story stays intact and the gap
+ * is obvious to whoever maintains the catalogue.
+ */
+
+const lines = [
+  { key: 'her' as const, label: 'For Her' },
+  { key: 'him' as const, label: 'For Him' },
+];
+---
+
+<section class="section routine" id="routine">
+  <div class="wrap">
+    <header class="head">
+      <div>
+        <p class="eyebrow">রুটিন</p>
+        <h2 class="title">
+          <span class="display">Your 3-step routine</span>
+        </h2>
+        <p class="sub">সকালে দুই মিনিট, রাতে তিন মিনিট। এর বেশি লাগে না।</p>
+      </div>
+
+      <fieldset class="toggle">
+        <legend class="sr-only">লাইন বেছে নিন</legend>
+        {
+          lines.map((line, i) => (
+            <span class="toggle-item">
+              <input
+                type="radio"
+                name="routine-line"
+                id={`routine-${line.key}`}
+                checked={i === 0}
+                class="sr-only"
+              />
+              <label class="toggle-label" for={`routine-${line.key}`}>
+                {line.label}
+              </label>
+            </span>
+          ))
+        }
+      </fieldset>
+    </header>
+
+    <div class="board" data-routine>
+      {
+        lines.map((line) => (
+          <div class="track" data-line={line.key}>
+            {site.routine.map((step) => {
+              const productId = site.routineMap[line.key][step.id];
+              const product = productId ? productById(productId) : undefined;
+
+              return (
+                <article class:list={['step', !product && 'step-empty']}>
+                  <p class="step-head">
+                    <span class="step-index display">{step.index}</span>
+                    <span class="step-label">
+                      <span class="en">{step.labelEn}</span>
+                      <span class="step-bn">{step.labelBn}</span>
+                    </span>
+                  </p>
+
+                  <p class="step-blurb">{step.blurb}</p>
+
+                  {product ? (
+                    <button type="button" class="step-card" data-order-open={product.id}>
+                      <span class="step-thumb">
+                        <Image
+                          src={productImage(product.image)}
+                          alt=""
+                          aria-hidden="true"
+                          widths={[96, 192]}
+                          sizes="96px"
+                          loading="lazy"
+                        />
+                      </span>
+                      <span class="step-text">
+                        <span class="step-name en">{product.name}</span>
+                        <span class="step-meta">
+                          {product.size} · {formatBdt(product.price)}
+                        </span>
+                      </span>
+                      <span class="step-go" aria-hidden="true">
+                        <Icon name="arrow-right" size={16} />
+                      </span>
+                    </button>
+                  ) : (
+                    <p class="step-soon">
+                      <Icon name="spark" size={16} />
+                      <span>এই ধাপের প্রোডাক্ট শীঘ্রই আসছে</span>
+                    </p>
+                  )}
+                </article>
+              );
+            })}
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    justify-content: space-between;
+    gap: 1.5rem;
+    margin-bottom: clamp(1.75rem, 3.5vw, 2.5rem);
+  }
+
+  .title {
+    margin-top: 0.75rem;
+    font-size: var(--text-4xl);
+  }
+
+  .sub {
+    margin-top: 0.9rem;
+    max-width: 28rem;
+    color: var(--color-ink-soft);
+  }
+
+  /* ── Toggle ──────────────────────────────────────────────────────────── */
+  .toggle {
+    display: flex;
+    gap: 0.35rem;
+    margin: 0;
+    padding: 0.3rem;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: var(--color-card);
+    box-shadow: var(--shadow-card);
+  }
+
+  .toggle-label {
+    display: grid;
+    place-items: center;
+    /* 44px tap target. */
+    min-height: 2.75rem;
+    padding-inline: 1.35rem;
+    border-radius: var(--radius-pill);
+    font-size: var(--text-sm);
+    font-weight: 700;
+    color: var(--color-ink-soft);
+    cursor: pointer;
+    transition:
+      background-color var(--dur-fast) var(--ease-out-soft),
+      color var(--dur-fast) var(--ease-out-soft);
+  }
+
+  .toggle-item:has(input:checked) .toggle-label {
+    background: var(--color-ink);
+    color: #fff;
+  }
+
+  .toggle-item:has(input:focus-visible) .toggle-label {
+    outline: 2px solid var(--color-orange-deep);
+    outline-offset: 2px;
+  }
+
+  /* ── Board ───────────────────────────────────────────────────────────── */
+  .board {
+    display: grid;
+  }
+
+  /* Both tracks share one grid cell so switching never shifts the page. */
+  .track {
+    grid-area: 1 / 1;
+    display: grid;
+    gap: clamp(0.75rem, 1.6vw, 1.25rem);
+    opacity: 0;
+    visibility: hidden;
+    transition:
+      opacity var(--dur-base) var(--ease-out-soft),
+      visibility var(--dur-base);
+  }
+
+  @media (min-width: 52rem) {
+    .track {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  .routine:has(#routine-her:checked) .track[data-line='her'],
+  .routine:has(#routine-him:checked) .track[data-line='him'] {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  /* ── Step ────────────────────────────────────────────────────────────── */
+  .step {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: clamp(1.1rem, 2.2vw, 1.6rem);
+    background: var(--color-card);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+  }
+
+  .step-empty {
+    background: transparent;
+    border: 1.5px dashed var(--color-line-strong);
+    box-shadow: none;
+  }
+
+  .step-head {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+  }
+
+  .step-index {
+    font-size: var(--text-2xl);
+    color: var(--color-orange);
+  }
+
+  .step-label {
+    display: grid;
+  }
+
+  .step-label .en {
+    font-size: var(--text-base);
+    font-weight: 700;
+  }
+
+  .step-bn {
+    font-size: var(--text-xs);
+    color: var(--color-ink-mute);
+  }
+
+  .step-blurb {
+    font-size: var(--text-sm);
+    line-height: 1.6;
+    color: var(--color-ink-soft);
+  }
+
+  /* ── Product tile ────────────────────────────────────────────────────── */
+  .step-card {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    width: 100%;
+    min-height: 4rem;
+    margin-top: auto;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-md);
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+    transition:
+      background-color var(--dur-fast) var(--ease-out-soft),
+      border-color var(--dur-fast) var(--ease-out-soft);
+  }
+
+  .step-card:hover {
+    background: var(--color-page);
+    border-color: var(--color-line-strong);
+  }
+
+  .step-thumb {
+    display: grid;
+    place-items: center;
+    width: 3rem;
+    height: 3rem;
+    flex: none;
+    border-radius: var(--radius-sm);
+    background: var(--color-beige);
+    overflow: hidden;
+  }
+
+  .step-thumb :global(img) {
+    width: 60%;
+    height: auto;
+  }
+
+  .step-text {
+    display: grid;
+    gap: 0.1rem;
+    min-width: 0;
+  }
+
+  .step-name {
+    font-size: var(--text-sm);
+    font-weight: 700;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .step-meta {
+    font-size: var(--text-xs);
+    color: var(--color-ink-mute);
+  }
+
+  .step-go {
+    margin-left: auto;
+    flex: none;
+    color: var(--color-ink-mute);
+    transition:
+      transform var(--dur-fast) var(--ease-out-soft),
+      color var(--dur-fast) var(--ease-out-soft);
+  }
+
+  .step-card:hover .step-go {
+    color: var(--color-orange);
+    transform: translateX(3px);
+  }
+
+  .step-soon {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: auto;
+    padding: 1rem 0.25rem;
+    font-size: var(--text-sm);
+    color: var(--color-ink-mute);
+  }
+
+  .step-soon :global(svg) {
+    color: var(--color-orange);
+    flex: none;
+  }
+</style>
