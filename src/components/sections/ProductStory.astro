@@ -43,9 +43,10 @@ const tones = ['beige', 'sage', 'sand', 'beige'] as const;
             )}
 
             {/* ── Sticky product well ──────────────────────────────── */}
-            <div class:list={['well', `tone-${tones[i % tones.length]}`]}>
-              <p class="index display" aria-hidden="true">{String(i + 1).padStart(2, '0')}</p>
-
+            <div
+              class:list={['well', `tone-${tones[i % tones.length]}`]}
+              style={`--index: "${String(i + 1).padStart(2, '0')}"`}
+            >
               <div class="bottle" data-story-bottle>
                 <Image
                   src={productImage(product.image)}
@@ -177,15 +178,23 @@ const tones = ['beige', 'sage', 'sand', 'beige'] as const;
     background: var(--color-beige-deep);
   }
 
-  /* Oversized editorial numeral behind the bottle. */
-  .index {
+  /* Oversized editorial numeral behind the bottle.
+     Generated content, not a text node: at 8% ink it is deliberately far below
+     text contrast, and as real text an auditor is right to fail it. As
+     ::before it is what it actually is — texture. */
+  .well::before {
+    content: var(--index, '');
     position: absolute;
-    top: 0.2em;
-    left: 0.12em;
+    top: 0.14em;
+    left: 0.1em;
+    font-family: var(--font-display);
+    font-weight: 800;
     font-size: var(--text-ghost);
     line-height: 1;
+    letter-spacing: -0.04em;
     color: color-mix(in oklab, var(--color-ink) 8%, transparent);
     user-select: none;
+    pointer-events: none;
   }
 
   .bottle {

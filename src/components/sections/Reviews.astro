@@ -19,7 +19,10 @@ import Icon from '~/components/ui/Icon.astro';
   </div>
 
   <div class="wrap">
-    <ul class="rail" tabindex="0" role="group" aria-label="ক্রেতাদের রিভিউ">
+    {/* No role="group" here: it would override the implicit list role and
+        orphan every <li>. A <ul> takes an accessible name directly, and
+        tabindex keeps the rail scrollable from the keyboard. */}
+    <ul class="rail" tabindex="0" aria-label="ক্রেতাদের রিভিউ">
       {
         site.reviews.map((review) => {
           const item = orderableById(review.productId);
