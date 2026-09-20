@@ -2,6 +2,7 @@
 import { Font } from 'astro:assets';
 import { site } from '~/config/site';
 import { productImage } from '~/lib/images';
+import CheckoutSheet from '~/components/checkout/CheckoutSheet.astro';
 import '~/styles/global.css';
 
 interface Props {
@@ -77,7 +78,7 @@ const jsonLd = [organization, ...products, faqPage];
 ---
 
 <!doctype html>
-<html lang="bn">
+<html lang="bn" data-pixel={site.facebookPixelId}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -114,8 +115,16 @@ const jsonLd = [organization, ...products, faqPage];
     <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} is:inline />
   </head>
 
-  <body class="grain">
+  <body>
     <a class="skip-link" href="#main">মূল কনটেন্টে যান</a>
     <slot />
+
+    <CheckoutSheet />
+
+    {/* The only script on the critical path. Everything else is a dynamic
+        import behind a real trigger — see src/scripts/boot.ts. */}
+    <script>
+      import '../../scripts/boot';
+    </script>
   </body>
 </html>

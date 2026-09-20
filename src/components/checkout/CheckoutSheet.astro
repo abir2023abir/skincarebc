@@ -1,0 +1,877 @@
+---
+import { site, orderables } from '~/config/site';
+import { divisions } from '~/lib/districts';
+import { formatBdt } from '~/lib/formatBdt';
+import Icon from '~/components/ui/Icon.astro';
+
+/**
+ * Checkout, rendered server-side and inert until opened.
+ *
+ * Built on native <dialog>. showModal() gives a real focus trap, Esc-to-close,
+ * background inertness, ::backdrop and focus restoration to the trigger — all
+ * of which would otherwise be a few hundred lines of bundled JavaScript to get
+ * right, and would still be worse.
+ *
+ * Prices and numbers are handed to the client as one small JSON island rather
+ * than by importing site.ts, which would drag the whole Bangla catalogue into
+ * the bundle for the sake of four numbers.
+ */
+
+const products = orderables.filter((o) => o.kind === 'product');
+const combos = orderables.filter((o) => o.kind === 'combo');
+
+const checkoutData = {
+  items: orderables.map((o) => ({ id: o.id, name: o.name, price: o.price })),
+  delivery: site.deliveryCharge,
+  bkashNumber: site.bkashNumber,
+  whatsappNumber: site.whatsappNumber,
+  orderPrefix: site.orderPrefix,
+  /** 'Send Money' for a personal wallet, 'Payment' for a merchant one. */
+  bkashAction: site.bkashAccountType === 'Merchant' ? 'Payment' : 'Send Money',
+};
+---
+
+<script type="application/json" id="checkout-data" set:html={JSON.stringify(checkoutData)} is:inline
+></script>
+
+<dialog class="sheet" id="checkout" aria-labelledby="checkout-title" data-checkout>
+  <div class="shell">
+    <!-- ── Form view ────────────────────────────────────────────────── -->
+    <div class="view" data-view="form">
+      <header class="head">
+        <div>
+          <p class="eyebrow">অর্ডার ফর্ম</p>
+          <h2 class="title" id="checkout-title">অর্ডার করুন</h2>
+        </div>
+        <button type="button" class="close" data-checkout-close aria-label="বন্ধ করুন">
+          <Icon name="close" size={20} />
+        </button>
+      </header>
+
+      <form class="form" data-checkout-form novalidate>
+        <!-- Product -->
+        <div class="field">
+          <label class="label" for="co-item">পণ্য</label>
+          <div class="control">
+            <select class="input select" id="co-item" name="itemId" aria-describedby="err-itemId">
+              <optgroup label="প্রোডাক্ট">
+                {
+                  products.map((o) => (
+                    <option value={o.id}>
+                      {o.name} — {o.meta} — {formatBdt(o.price)}
+                    </option>
+                  ))
+                }
+              </optgroup>
+              <optgroup label="কম্বো">
+                {
+                  combos.map((o) => (
+                    <option value={o.id}>
+                      {o.name} — {o.meta} — {formatBdt(o.price)}
+                    </option>
+                  ))
+                }
+              </optgroup>
+            </select>
+            <span class="select-arrow" aria-hidden="true"><Icon name="chevron" size={16} /></span>
+          </div>
+          <p class="err" id="err-itemId" data-err="itemId" role="alert"></p>
+        </div>
+
+        <!-- Quantity -->
+        <div class="field">
+          <label class="label" for="co-qty">পরিমাণ</label>
+          <div class="stepper">
+            <button type="button" class="step" data-qty="-1" aria-label="পরিমাণ কমান">
+              <Icon name="minus" size={18} />
+            </button>
+            <input
+              class="input qty"
+              id="co-qty"
+              name="quantity"
+              type="number"
+              inputmode="numeric"
+              value="1"
+              min="1"
+              max="10"
+              step="1"
+              aria-describedby="err-quantity"
+            />
+            <button type="button" class="step" data-qty="1" aria-label="পরিমাণ বাড়ান">
+              <Icon name="plus" size={18} />
+            </button>
+          </div>
+          <p class="err" id="err-quantity" data-err="quantity" role="alert"></p>
+        </div>
+
+        <!-- Name -->
+        <div class="field">
+          <label class="label" for="co-name">পুরো নাম</label>
+          <input
+            class="input"
+            id="co-name"
+            name="name"
+            type="text"
+            autocomplete="name"
+            enterkeyhint="next"
+            aria-describedby="err-name"
+            required
+          />
+          <p class="err" id="err-name" data-err="name" role="alert"></p>
+        </div>
+
+        <!-- Mobile -->
+        <div class="field">
+          <label class="label" for="co-mobile">মোবাইল নম্বর</label>
+          <input
+            class="input"
+            id="co-mobile"
+            name="mobile"
+            type="tel"
+            inputmode="numeric"
+            autocomplete="tel-national"
+            placeholder="01XXXXXXXXX"
+            enterkeyhint="next"
+            aria-describedby="err-mobile hint-mobile"
+            required
+          />
+          <p class="hint" id="hint-mobile">যে নম্বরে কল বা WhatsApp করা যাবে।</p>
+          <p class="err" id="err-mobile" data-err="mobile" role="alert"></p>
+        </div>
+
+        <!-- District -->
+        <div class="field">
+          <label class="label" for="co-district">জেলা</label>
+          <div class="control">
+            <select
+              class="input select"
+              id="co-district"
+              name="district"
+              autocomplete="address-level1"
+              aria-describedby="err-district"
+              required
+            >
+              <option value="" selected disabled>জেলা বেছে নিন</option>
+              {
+                divisions.map((division) => (
+                  <optgroup label={`${division.name} বিভাগ`}>
+                    {division.districts.map((d) => (
+                      <option value={d}>{d}</option>
+                    ))}
+                  </optgroup>
+                ))
+              }
+            </select>
+            <span class="select-arrow" aria-hidden="true"><Icon name="chevron" size={16} /></span>
+          </div>
+          <p class="err" id="err-district" data-err="district" role="alert"></p>
+        </div>
+
+        <!-- Address -->
+        <div class="field">
+          <label class="label" for="co-address">সম্পূর্ণ ঠিকানা</label>
+          <textarea
+            class="input area"
+            id="co-address"
+            name="address"
+            rows="3"
+            autocomplete="street-address"
+            placeholder="বাড়ি/হোল্ডিং, রোড, এলাকা, থানা"
+            aria-describedby="err-address"
+            required></textarea>
+          <p class="err" id="err-address" data-err="address" role="alert"></p>
+        </div>
+
+        <!-- Delivery area -->
+        <fieldset class="field area-field">
+          <legend class="label">ডেলিভারি এলাকা</legend>
+          <div class="areas">
+            <span class="area-item">
+              <input type="radio" name="area" id="co-area-inside" value="inside" checked class="sr-only" />
+              <label class="area-label" for="co-area-inside">
+                <span class="area-name">রাজশাহীর ভিতরে</span>
+                <span class="area-cost">{formatBdt(site.deliveryCharge.insideRajshahi)}</span>
+              </label>
+            </span>
+            <span class="area-item">
+              <input type="radio" name="area" id="co-area-outside" value="outside" class="sr-only" />
+              <label class="area-label" for="co-area-outside">
+                <span class="area-name">রাজশাহীর বাইরে</span>
+                <span class="area-cost">{formatBdt(site.deliveryCharge.outsideRajshahi)}</span>
+              </label>
+            </span>
+          </div>
+          <p class="err" id="err-area" data-err="area" role="alert"></p>
+        </fieldset>
+
+        <!-- Note -->
+        <div class="field">
+          <label class="label" for="co-note">
+            নোট <span class="optional">(না লিখলেও চলবে)</span>
+          </label>
+          <textarea
+            class="input area"
+            id="co-note"
+            name="note"
+            rows="2"
+            placeholder="কোনো নির্দেশনা থাকলে লিখুন"></textarea>
+        </div>
+
+        <!-- ── Summary ─────────────────────────────────────────────── -->
+        <div class="summary" aria-live="polite">
+          <p class="sum-row">
+            <span>সাবটোটাল</span>
+            <span data-sum="subtotal">—</span>
+          </p>
+          <p class="sum-row">
+            <span>ডেলিভারি চার্জ</span>
+            <span data-sum="delivery">—</span>
+          </p>
+          <p class="sum-row sum-total">
+            <span>সর্বমোট</span>
+            <span data-sum="total">—</span>
+          </p>
+        </div>
+
+        <!-- ── bKash ───────────────────────────────────────────────── -->
+        <div class="bkash">
+          <div class="bkash-top">
+            <p class="bkash-brand">
+              <span class="bkash-mark" aria-hidden="true"><Icon name="wallet" size={16} /></span>
+              <span>bKash</span>
+              <span class="bkash-type">{site.bkashAccountType}</span>
+            </p>
+            <button type="button" class="copy" data-copy={site.bkashNumber}>
+              <span class="copy-idle">
+                <Icon name="copy" size={15} />
+                <span>কপি</span>
+              </span>
+              <span class="copy-done" aria-hidden="true">
+                <Icon name="check" size={15} />
+                <span>কপি হয়েছে</span>
+              </span>
+            </button>
+          </div>
+
+          <p class="bkash-number">{site.bkashNumber}</p>
+
+          <p class="bkash-help">
+            উপরের নাম্বারে মোট <strong data-sum="total-inline">—</strong>
+            {' '}{checkoutData.bkashAction} করুন, তারপর WhatsApp-এ ট্রানজেকশনের স্ক্রিনশট পাঠান।
+          </p>
+        </div>
+
+        <button type="submit" class="btn btn-primary confirm">
+          <Icon name="chat" size={18} />
+          <span>WhatsApp-এ অর্ডার কনফার্ম করুন</span>
+        </button>
+
+        <p class="legal">
+          কনফার্ম করলে WhatsApp খুলবে আপনার অর্ডারের তথ্যসহ। মেসেজটি পাঠালে তবেই অর্ডার গণ্য হবে।
+        </p>
+      </form>
+    </div>
+
+    <!-- ── Success view ─────────────────────────────────────────────── -->
+    <div class="view" data-view="done" hidden>
+      <div class="done">
+        <p class="done-mark" aria-hidden="true"><Icon name="check" size={28} /></p>
+
+        <h2 class="done-title">অর্ডারের তথ্য পাঠানো হয়েছে</h2>
+        <p class="done-sub">
+          WhatsApp খোলেনি? নিচের বাটনে আবার চাপ দিন — তথ্য একই থাকবে।
+        </p>
+
+        <dl class="done-facts">
+          <div>
+            <dt>অর্ডার আইডি</dt>
+            <dd data-done="orderId">—</dd>
+          </div>
+          <div>
+            <dt>মোট</dt>
+            <dd data-done="total">—</dd>
+          </div>
+          <div>
+            <dt>bKash নাম্বার</dt>
+            <dd class="done-bkash">
+              <span>{site.bkashNumber}</span>
+              <button type="button" class="copy copy-sm" data-copy={site.bkashNumber}>
+                <span class="copy-idle">
+                  <Icon name="copy" size={14} />
+                  <span>কপি</span>
+                </span>
+                <span class="copy-done" aria-hidden="true">
+                  <Icon name="check" size={14} />
+                  <span>হয়েছে</span>
+                </span>
+              </button>
+            </dd>
+          </div>
+        </dl>
+
+        <p class="done-remind">
+          <Icon name="camera" size={16} />
+          <span>টাকা পাঠানোর পর ট্রানজেকশনের স্ক্রিনশটটি WhatsApp-এ পাঠাতে ভুলবেন না।</span>
+        </p>
+
+        <div class="done-actions">
+          <a class="btn btn-primary" data-done="wa" href="#" target="_blank" rel="noopener noreferrer">
+            <Icon name="chat" size={18} />
+            <span>আবার WhatsApp খুলুন</span>
+          </a>
+          <button type="button" class="btn btn-ghost" data-checkout-close>বন্ধ করুন</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<style>
+  /* ── Dialog frame ────────────────────────────────────────────────────── */
+  .sheet {
+    width: 100%;
+    max-width: 30rem;
+    max-height: 100dvh;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--color-ink);
+    overflow: visible;
+  }
+
+  .sheet::backdrop {
+    background: rgb(19 19 19 / 0.55);
+    backdrop-filter: blur(3px);
+  }
+
+  .shell {
+    max-height: 92dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background: var(--color-card);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-float);
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Bottom sheet on phones, centred modal from 34rem up. */
+  .sheet {
+    margin: 0 auto auto;
+    position: fixed;
+    inset: auto 0 0;
+  }
+
+  .shell {
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  @media (min-width: 34rem) {
+    .sheet {
+      inset: 0;
+      margin: auto;
+    }
+
+    .shell {
+      border-radius: var(--radius-lg);
+    }
+  }
+
+  /* Slide up / fade in. Transform and opacity only. */
+  .sheet[open] .shell {
+    animation: sheet-in var(--dur-base) var(--ease-out-soft);
+  }
+
+  @keyframes sheet-in {
+    from {
+      opacity: 0;
+      transform: translateY(2.5rem);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sheet[open] .shell {
+      animation: none;
+    }
+  }
+
+  /* ── Head ────────────────────────────────────────────────────────────── */
+  .head {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    display: flex;
+    align-items: start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.15rem clamp(1rem, 4vw, 1.5rem) 0.9rem;
+    background: var(--color-card);
+    border-bottom: 1px solid var(--color-line);
+  }
+
+  .title {
+    margin-top: 0.3rem;
+    font-size: var(--text-xl);
+  }
+
+  .close {
+    display: grid;
+    place-items: center;
+    /* 44px tap target. */
+    width: 2.75rem;
+    height: 2.75rem;
+    flex: none;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: var(--color-page);
+    cursor: pointer;
+    transition: background-color var(--dur-fast) var(--ease-out-soft);
+  }
+
+  .close:hover {
+    background: var(--color-beige);
+  }
+
+  /* ── Form ────────────────────────────────────────────────────────────── */
+  .form {
+    display: grid;
+    gap: 1rem;
+    padding: 1.15rem clamp(1rem, 4vw, 1.5rem) 1.5rem;
+  }
+
+  .field {
+    display: grid;
+    gap: 0.4rem;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    min-width: 0;
+  }
+
+  .label {
+    font-size: var(--text-sm);
+    font-weight: 700;
+  }
+
+  .optional {
+    font-weight: 500;
+    color: var(--color-ink-mute);
+  }
+
+  .input {
+    width: 100%;
+    /* 46px — comfortably over the tap-target floor, and stops iOS zooming in
+       on focus because the font-size is 16px. */
+    min-height: 2.875rem;
+    padding: 0.7rem 0.9rem;
+    font-size: 1rem;
+    background: var(--color-page);
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    transition:
+      border-color var(--dur-fast) var(--ease-out-soft),
+      background-color var(--dur-fast) var(--ease-out-soft);
+  }
+
+  .input:focus {
+    background: var(--color-card);
+    border-color: var(--color-ink);
+  }
+
+  .input[aria-invalid='true'] {
+    border-color: var(--color-orange);
+    background: color-mix(in oklab, var(--color-orange) 6%, var(--color-card));
+  }
+
+  .area {
+    min-height: 5rem;
+    resize: vertical;
+    line-height: 1.6;
+  }
+
+  /* Select + its chevron. */
+  .control {
+    position: relative;
+  }
+
+  .select {
+    appearance: none;
+    padding-right: 2.5rem;
+  }
+
+  .select-arrow {
+    position: absolute;
+    right: 0.85rem;
+    top: 50%;
+    translate: 0 -50%;
+    pointer-events: none;
+    color: var(--color-ink-mute);
+  }
+
+  .hint {
+    font-size: var(--text-xs);
+    color: var(--color-ink-mute);
+  }
+
+  /* Errors take no space until they have something to say. */
+  .err {
+    font-size: var(--text-xs);
+    font-weight: 700;
+    color: var(--color-orange-deep);
+  }
+
+  .err:empty {
+    display: none;
+  }
+
+  /* ── Stepper ─────────────────────────────────────────────────────────── */
+  .stepper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .step {
+    display: grid;
+    place-items: center;
+    width: 2.875rem;
+    height: 2.875rem;
+    flex: none;
+    border: 1px solid var(--color-line-strong);
+    border-radius: var(--radius-sm);
+    background: transparent;
+    cursor: pointer;
+    transition:
+      background-color var(--dur-fast) var(--ease-out-soft),
+      border-color var(--dur-fast) var(--ease-out-soft);
+  }
+
+  .step:hover:not(:disabled) {
+    background: var(--color-page);
+    border-color: var(--color-ink);
+  }
+
+  .step:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .qty {
+    width: 4.5rem;
+    text-align: center;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+
+  .qty::-webkit-outer-spin-button,
+  .qty::-webkit-inner-spin-button {
+    appearance: none;
+    margin: 0;
+  }
+
+  /* ── Delivery area ───────────────────────────────────────────────────── */
+  .areas {
+    display: grid;
+    gap: 0.5rem;
+  }
+
+  @media (min-width: 26rem) {
+    .areas {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .area-label {
+    display: grid;
+    gap: 0.15rem;
+    /* 44px tap target. */
+    min-height: 3.5rem;
+    padding: 0.7rem 0.9rem;
+    border: 1px solid var(--color-line-strong);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition:
+      border-color var(--dur-fast) var(--ease-out-soft),
+      background-color var(--dur-fast) var(--ease-out-soft);
+  }
+
+  .area-item:has(input:checked) .area-label {
+    border-color: var(--color-ink);
+    background: var(--color-page);
+  }
+
+  .area-item:has(input:focus-visible) .area-label {
+    outline: 2px solid var(--color-orange-deep);
+    outline-offset: 2px;
+  }
+
+  .area-name {
+    font-size: var(--text-sm);
+    font-weight: 700;
+  }
+
+  .area-cost {
+    font-size: var(--text-xs);
+    color: var(--color-ink-mute);
+  }
+
+  /* ── Summary ─────────────────────────────────────────────────────────── */
+  .summary {
+    display: grid;
+    gap: 0.5rem;
+    padding: 1rem 1.1rem;
+    background: var(--color-page);
+    border-radius: var(--radius-md);
+  }
+
+  .sum-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    font-size: var(--text-sm);
+    color: var(--color-ink-soft);
+  }
+
+  .sum-row span:last-child {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .sum-total {
+    padding-top: 0.6rem;
+    border-top: 1px solid var(--color-line);
+    font-size: var(--text-lg);
+    font-weight: 800;
+    color: var(--color-ink);
+  }
+
+  /* ── bKash card ──────────────────────────────────────────────────────────
+     Deliberately not the official bKash logo or brand pink — a neutral card
+     with the word set in our own type. See README. */
+  .bkash {
+    display: grid;
+    gap: 0.6rem;
+    padding: 1rem 1.1rem;
+    border: 1.5px solid var(--color-ink);
+    border-radius: var(--radius-md);
+  }
+
+  .bkash-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .bkash-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-display);
+    font-size: var(--text-base);
+    font-weight: 800;
+  }
+
+  .bkash-mark {
+    display: grid;
+    place-items: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: var(--radius-xs);
+    background: var(--color-ink);
+    color: #fff;
+  }
+
+  .bkash-type {
+    padding: 0.1rem 0.5rem;
+    border-radius: var(--radius-pill);
+    background: var(--color-page);
+    font-size: var(--text-micro);
+    font-weight: 500;
+    color: var(--color-ink-soft);
+  }
+
+  .bkash-number {
+    font-family: var(--font-display);
+    font-size: var(--text-2xl);
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .bkash-help {
+    font-size: var(--text-xs);
+    line-height: 1.7;
+    color: var(--color-ink-soft);
+  }
+
+  .bkash-help strong {
+    color: var(--color-ink);
+  }
+
+  /* ── Copy button ─────────────────────────────────────────────────────── */
+  .copy {
+    display: grid;
+    /* Both states share one cell so the button never changes width. */
+    place-items: center;
+    /* 44px tap target. */
+    min-height: 2.75rem;
+    padding-inline: 0.9rem;
+    border: 1px solid var(--color-line-strong);
+    border-radius: var(--radius-pill);
+    background: transparent;
+    font-size: var(--text-xs);
+    font-weight: 700;
+    cursor: pointer;
+    transition:
+      background-color var(--dur-fast) var(--ease-out-soft),
+      border-color var(--dur-fast) var(--ease-out-soft),
+      color var(--dur-fast) var(--ease-out-soft);
+  }
+
+  .copy:hover {
+    border-color: var(--color-ink);
+  }
+
+  .copy-idle,
+  .copy-done {
+    grid-area: 1 / 1;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    transition: opacity var(--dur-fast) var(--ease-out-soft);
+  }
+
+  .copy-done {
+    opacity: 0;
+  }
+
+  .copy[data-copied] {
+    background: var(--color-ink);
+    border-color: var(--color-ink);
+    color: #fff;
+  }
+
+  .copy[data-copied] .copy-idle {
+    opacity: 0;
+  }
+
+  .copy[data-copied] .copy-done {
+    opacity: 1;
+  }
+
+  .copy-sm {
+    min-height: 2.25rem;
+    padding-inline: 0.7rem;
+  }
+
+  /* ── Confirm ─────────────────────────────────────────────────────────── */
+  .confirm {
+    width: 100%;
+    min-height: 3.25rem;
+    font-size: var(--text-base);
+  }
+
+  .legal {
+    font-size: var(--text-xs);
+    line-height: 1.7;
+    color: var(--color-ink-mute);
+    text-align: center;
+  }
+
+  /* ── Success ─────────────────────────────────────────────────────────── */
+  .done {
+    display: grid;
+    gap: 0.9rem;
+    padding: clamp(1.5rem, 5vw, 2.25rem) clamp(1rem, 4vw, 1.5rem);
+    text-align: center;
+    justify-items: center;
+  }
+
+  .done-mark {
+    display: grid;
+    place-items: center;
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: var(--radius-pill);
+    background: var(--color-green);
+    color: #fff;
+  }
+
+  .done-title {
+    font-size: var(--text-xl);
+  }
+
+  .done-sub {
+    max-width: 22rem;
+    font-size: var(--text-sm);
+    color: var(--color-ink-soft);
+  }
+
+  .done-facts {
+    display: grid;
+    gap: 0.5rem;
+    width: 100%;
+    margin: 0.4rem 0 0;
+    padding: 1rem 1.1rem;
+    background: var(--color-page);
+    border-radius: var(--radius-md);
+    text-align: left;
+  }
+
+  .done-facts > div {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .done-facts dt {
+    font-size: var(--text-xs);
+    color: var(--color-ink-mute);
+  }
+
+  .done-facts dd {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: var(--text-base);
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .done-bkash {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .done-remind {
+    display: flex;
+    align-items: start;
+    gap: 0.55rem;
+    max-width: 24rem;
+    font-size: var(--text-xs);
+    line-height: 1.7;
+    color: var(--color-ink-soft);
+    text-align: left;
+  }
+
+  .done-remind :global(svg) {
+    flex: none;
+    margin-top: 0.15rem;
+    color: var(--color-orange);
+  }
+
+  .done-actions {
+    display: grid;
+    gap: 0.6rem;
+    width: 100%;
+    margin-top: 0.4rem;
+  }
+
+  .done-actions .btn {
+    width: 100%;
+  }
+</style>

@@ -1,7 +1,6 @@
 /** Checkout form validation. Pure — returns field-keyed Bangla error messages. */
 
 import { MAX_QTY, MIN_QTY, type DeliveryArea } from './pricing';
-import { isKnownDistrict } from './districts';
 
 export interface OrderDraft {
   itemId: string;
@@ -18,6 +17,19 @@ export type FieldName = keyof OrderDraft;
 export type Errors = Partial<Record<FieldName, string>>;
 
 /**
+ * The valid values to check against.
+ *
+ * These are passed in rather than imported so the browser bundle never pulls in
+ * the 64-district list or the product catalogue: the checkout reads both
+ * straight out of the server-rendered <select> elements it is already
+ * validating, which costs nothing.
+ */
+export interface KnownValues {
+  itemIds: readonly string[];
+  districts: readonly string[];
+}
+
+/**
  * Bangladeshi mobile numbers are 11 digits starting 013–019.
  * Accepts the shapes people actually paste — "+8801712345678", "8801712345678",
  * "01712-345678" — and normalises them all to "01712345678".
@@ -32,10 +44,10 @@ export function normaliseMobile(input: string): string | null {
   return /^01[3-9]\d{8}$/.test(local) ? local : null;
 }
 
-export function validateDraft(draft: OrderDraft, knownItemIds: readonly string[]): Errors {
+export function validateDraft(draft: OrderDraft, known: KnownValues): Errors {
   const errors: Errors = {};
 
-  if (!knownItemIds.includes(draft.itemId)) {
+  if (!known.itemIds.includes(draft.itemId)) {
     errors.itemId = 'একটি পণ্য বেছে নিন।';
   }
 
@@ -54,7 +66,7 @@ export function validateDraft(draft: OrderDraft, knownItemIds: readonly string[]
 
   if (!draft.district.trim()) {
     errors.district = 'আপনার জেলা বেছে নিন।';
-  } else if (!isKnownDistrict(draft.district)) {
+  } else if (!known.districts.includes(draft.district.trim())) {
     errors.district = 'তালিকা থেকে একটি জেলা বেছে নিন।';
   }
 
@@ -72,3 +84,15 @@ export function validateDraft(draft: OrderDraft, knownItemIds: readonly string[]
 export function isValid(errors: Errors): boolean {
   return Object.keys(errors).length === 0;
 }
+
+/** Field order for "focus the first thing that is wrong". */
+export const FIELD_ORDER: readonly FieldName[] = [
+  'itemId',
+  'quantity',
+  'name',
+  'mobile',
+  'district',
+  'address',
+  'area',
+  'note',
+];

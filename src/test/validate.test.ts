@@ -3,7 +3,7 @@ import { isValid, normaliseMobile, validateDraft } from '~/lib/validate';
 import type { OrderDraft } from '~/lib/validate';
 import { districts } from '~/lib/districts';
 
-const ids = ['vitamin-c-glow-serum', 'combo-glow-duo'];
+const known = { itemIds: ['vitamin-c-glow-serum', 'combo-glow-duo'], districts };
 
 const good: OrderDraft = {
   itemId: 'vitamin-c-glow-serum',
@@ -43,27 +43,27 @@ describe('normaliseMobile', () => {
 
 describe('validateDraft', () => {
   it('passes a complete draft', () => {
-    expect(isValid(validateDraft(good, ids))).toBe(true);
+    expect(isValid(validateDraft(good, known))).toBe(true);
   });
 
   it('flags each field independently', () => {
-    expect(validateDraft({ ...good, name: 'অ' }, ids).name).toBeDefined();
-    expect(validateDraft({ ...good, mobile: '0121' }, ids).mobile).toBeDefined();
-    expect(validateDraft({ ...good, address: 'ছোট' }, ids).address).toBeDefined();
-    expect(validateDraft({ ...good, district: '' }, ids).district).toBeDefined();
-    expect(validateDraft({ ...good, quantity: 0 }, ids).quantity).toBeDefined();
-    expect(validateDraft({ ...good, quantity: 11 }, ids).quantity).toBeDefined();
-    expect(validateDraft({ ...good, itemId: 'nope' }, ids).itemId).toBeDefined();
+    expect(validateDraft({ ...good, name: 'অ' }, known).name).toBeDefined();
+    expect(validateDraft({ ...good, mobile: '0121' }, known).mobile).toBeDefined();
+    expect(validateDraft({ ...good, address: 'ছোট' }, known).address).toBeDefined();
+    expect(validateDraft({ ...good, district: '' }, known).district).toBeDefined();
+    expect(validateDraft({ ...good, quantity: 0 }, known).quantity).toBeDefined();
+    expect(validateDraft({ ...good, quantity: 11 }, known).quantity).toBeDefined();
+    expect(validateDraft({ ...good, itemId: 'nope' }, known).itemId).toBeDefined();
   });
 
   it('rejects a district that is not one of the 64', () => {
-    expect(validateDraft({ ...good, district: 'কলকাতা' }, ids).district).toBeDefined();
+    expect(validateDraft({ ...good, district: 'কলকাতা' }, known).district).toBeDefined();
   });
 
   it('collects every problem at once rather than stopping at the first', () => {
     const errors = validateDraft(
       { ...good, name: '', mobile: 'x', address: '', district: '' },
-      ids,
+      known,
     );
     expect(Object.keys(errors).sort()).toEqual(['address', 'district', 'mobile', 'name']);
   });
