@@ -1,0 +1,33 @@
+{
+  "name": "skincare-bd-landing",
+  "version": "1.0.0",
+  "description": "Static landing page for a Bangladeshi skincare brand with WhatsApp + bKash ordering.",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "placeholders": "node scripts/gen-placeholders.mjs",
+    "audit": "node scripts/audit-build.mjs"
+  },
+  "type": "module",
+  "dependencies": {
+    "@astrojs/sitemap": "^3.7.4",
+    "@tailwindcss/vite": "^4.3.3",
+    "astro": "^7.3.3",
+    "gsap": "^3.15.0",
+    "tailwindcss": "^4.3.3"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.2",
+    "sharp": "^0.35.4",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.1"
+  },
+  "private": true,
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}

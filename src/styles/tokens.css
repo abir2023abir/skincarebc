@@ -1,0 +1,87 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   DESIGN TOKENS
+   Every value the design depends on lives here. Registered through Tailwind's
+   @theme so each token is both a CSS variable and a utility class
+   (--color-clay gives bg-clay / text-clay / border-clay, and so on).
+
+   Mood: modern apothecary meets clinical lab. Warm bone paper, deep
+   charcoal-green ink, one muted clay accent that carries every call to action.
+   Sage and teal are line markers for "her" and "him" — hints, never themes.
+
+   All foreground/background pairs are verified at WCAG AA by
+   `node scripts/contrast.mjs`, which exits non-zero on a regression.
+   ───────────────────────────────────────────────────────────────────────── */
+
+@theme {
+  /* ── Surface ─────────────────────────────────────────────────────────── */
+  --color-bone: #f4f1ec;
+  --color-paper: #faf8f4;
+  --color-sand: #e9e3d8;
+  --color-sand-deep: #dcd4c6;
+
+  /* ── Ink ─────────────────────────────────────────────────────────────── */
+  --color-ink: #1b2520;
+  --color-ink-2: #2b3730;
+  --color-ink-soft: #4e5c54;
+  --color-ink-mute: #59675f;
+
+  /* ── Accent 1 — clay. Every primary action is this colour and no other. ─ */
+  --color-clay: #a0462a;
+  --color-clay-deep: #853a22;
+  --color-clay-soft: #c98a6e;
+
+  /* ── Accent 2 — line markers. Used at chip scale only. ─────────────── */
+  --color-sage: #5f7359;
+  --color-sage-soft: #8fa189;
+  --color-teal: #1f4446;
+  --color-teal-soft: #7fa0a1;
+
+  /* ── Hairlines. Thin, warm, never pure grey. ─────────────────────────── */
+  --color-line: color-mix(in oklab, var(--color-ink) 14%, transparent);
+  --color-line-strong: color-mix(in oklab, var(--color-ink) 26%, transparent);
+  --color-line-dark: color-mix(in oklab, var(--color-bone) 18%, transparent);
+
+  /* ── Type families. --ff-* are injected by Astro's font pipeline. ────── */
+  --font-display: var(--ff-display), Georgia, 'Times New Roman', serif;
+  --font-ui: var(--ff-ui), 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  /* Bangla first, Latin falls through to Inter because the Hind Siliguri
+     @font-face only claims the Bengali unicode-range. */
+  --font-bn: var(--ff-bn), var(--ff-ui), 'Nirmala UI', sans-serif;
+
+  /* ── Fluid type scale ────────────────────────────────────────────────── */
+  --text-micro: 0.6875rem;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: clamp(1.0625rem, 0.3vw + 1rem, 1.1875rem);
+  --text-xl: clamp(1.25rem, 0.6vw + 1.1rem, 1.5rem);
+  --text-2xl: clamp(1.5rem, 1.2vw + 1.2rem, 2rem);
+  --text-3xl: clamp(1.875rem, 2.4vw + 1.3rem, 3rem);
+  --text-4xl: clamp(2.375rem, 4.4vw + 1.2rem, 4.25rem);
+  --text-5xl: clamp(2.75rem, 6.6vw + 1rem, 6.5rem);
+  /* Oversized editorial numerals — decorative, never announced to a reader. */
+  --text-numeral: clamp(4rem, 13vw, 11rem);
+
+  /* ── Rhythm. One scale, used everywhere. ─────────────────────────────── */
+  --spacing-gutter: clamp(1.25rem, 4.5vw, 4.5rem);
+  --spacing-section: clamp(4.5rem, 11vw, 10rem);
+  --spacing-section-tight: clamp(3rem, 7vw, 6rem);
+
+  /* ── Shape ───────────────────────────────────────────────────────────── */
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 10px;
+  --radius-lg: 20px;
+  --radius-pill: 999px;
+
+  /* ── Motion. Two curves only, so everything moves like one object. ───── */
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out-soft: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast: 180ms;
+  --dur-base: 420ms;
+  --dur-slow: 900ms;
+
+  /* ── Layout ──────────────────────────────────────────────────────────── */
+  --container-page: 84rem;
+  --container-text: 38rem;
+}
