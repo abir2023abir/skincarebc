@@ -3,6 +3,7 @@ import { Font } from 'astro:assets';
 import { site } from '~/config/site';
 import { productImage } from '~/lib/images';
 import CheckoutSheet from '~/components/checkout/CheckoutSheet.astro';
+import WhatsAppFab from '~/components/layout/WhatsAppFab.astro';
 import '~/styles/global.css';
 
 interface Props {
@@ -120,6 +121,7 @@ const jsonLd = [organization, ...products, faqPage];
     <slot />
 
     <CheckoutSheet />
+    <WhatsAppFab />
 
     {/* The only script on the critical path. Everything else is a dynamic
         import behind a real trigger — see src/scripts/boot.ts. */}

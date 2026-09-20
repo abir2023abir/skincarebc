@@ -1,0 +1,64 @@
+---
+import { site } from '~/config/site';
+import Icon from '~/components/ui/Icon.astro';
+
+/**
+ * Floating WhatsApp button, fixed to the right edge.
+ *
+ * Stays above page content (z-index 46, above the mobile order bar at 45) but
+ * below the checkout dialog (which uses the browser's native top-layer).
+ *
+ * On mobile (<48rem) the bar already has a WhatsApp link so the FAB is hidden
+ * to avoid duplication and tap-target crowding.
+ */
+
+const href = `https://wa.me/${site.whatsappNumber.replace(/\D/g, '')}`;
+---
+
+<a
+  class="wa-fab"
+  href={href}
+  target="_blank"
+  rel="noopener noreferrer"
+  aria-label="WhatsApp-এ মেসেজ দিন"
+>
+  <Icon name="chat" size={24} />
+</a>
+
+<style>
+  .wa-fab {
+    position: fixed;
+    right: 1rem;
+    bottom: clamp(5rem, 12vh, 7rem);
+    z-index: 46;
+    display: grid;
+    place-items: center;
+    /* Minimum 48×48 tap target. */
+    width: 3rem;
+    height: 3rem;
+    border-radius: var(--radius-pill);
+    background: var(--color-ink);
+    color: #fff;
+    box-shadow: var(--shadow-float);
+    transition:
+      background-color var(--dur-fast) var(--ease-out-soft),
+      transform var(--dur-fast) var(--ease-out-soft);
+  }
+
+  .wa-fab:hover {
+    background: var(--color-orange);
+    transform: scale(1.08);
+  }
+
+  .wa-fab:focus-visible {
+    outline: 2px solid var(--color-orange-deep);
+    outline-offset: 3px;
+  }
+
+  /* Hidden on mobile — the mobile order bar already has a WhatsApp link. */
+  @media (max-width: 48rem) {
+    .wa-fab {
+      display: none;
+    }
+  }
+</style>

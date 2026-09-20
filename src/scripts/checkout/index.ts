@@ -1,29 +1,30 @@
 /**
  * Checkout behaviour. Loaded on demand — boot.ts dynamically imports this the
- * first time someone presses an "Order Now" button, so none of it is on the
- * critical path.
+ * first time someone presses an "Order Now" button or opens the cart, so none
+ * of it is on the critical path.
  *
- * The dialog itself handles focus trapping, Esc and focus restoration; this
- * module only owns pricing, validation, the WhatsApp hand-off and the success
- * state.
+ * Views: cart → form → done
+ * The dialog itself handles focus trapping, Esc and focus restoration.
  */
 
-import { computeTotals, clampQuantity, MAX_QTY, MIN_QTY, type DeliveryArea } from '~/lib/pricing';
+import { computeCartTotals, type DeliveryArea, type DeliveryCharges } from '~/lib/pricing';
 import { formatBdt } from '~/lib/formatBdt';
 import { validateDraft, isValid, normaliseMobile, FIELD_ORDER } from '~/lib/validate';
 import type { Errors, OrderDraft } from '~/lib/validate';
 import { buildOrderMessage, buildWhatsappUrl } from '~/lib/buildOrderMessage';
 import { makeOrderId } from '~/lib/orderId';
 import { loadCustomer, saveCustomer } from './storage';
+import { CartStore } from './cart';
 import { track } from '../analytics/pixel';
 
 interface CheckoutData {
   items: { id: string; name: string; price: number }[];
-  delivery: { insideRajshahi: number; outsideRajshahi: number };
+  delivery: DeliveryCharges;
   bkashNumber: string;
   whatsappNumber: string;
   orderPrefix: string;
   bkashAction: string;
+  paymentMethods: ('bkash' | 'cod')[];
 }
 
 const $ = <T extends Element>(sel: string, root: ParentNode = document) =>
@@ -34,6 +35,7 @@ let form: HTMLFormElement;
 let data: CheckoutData;
 let prices: Map<string, { name: string; price: number }>;
 let districtValues: string[] = [];
+let cart: CartStore;
 /** Set once a submit has been attempted; until then we do not nag mid-typing. */
 let submitted = false;
 /**
@@ -47,8 +49,6 @@ let lastTrigger: HTMLElement | null = null;
 /* ── Field handles ───────────────────────────────────────────────────────── */
 
 interface Fields {
-  itemId: HTMLSelectElement;
-  quantity: HTMLInputElement;
   name: HTMLInputElement;
   mobile: HTMLInputElement;
   district: HTMLSelectElement;
@@ -63,25 +63,47 @@ function areaValue(): DeliveryArea {
   return checked?.value === 'outside' ? 'outside' : 'inside';
 }
 
+function paymentMethodValue(): 'bkash' | 'cod' {
+  const checked = form.querySelector<HTMLInputElement>('input[name="paymentMethod"]:checked');
+  if (checked?.value === 'cod') return 'cod';
+  return 'bkash';
+}
+
 function readDraft(): OrderDraft {
   return {
-    itemId: fields.itemId.value,
-    quantity: clampQuantity(fields.quantity.value),
+    // itemId and quantity are cart-driven; put dummy values so the type passes —
+    // validateDraft skips them when itemIds is empty.
+    itemId: cart.lines[0]?.itemId ?? '',
+    quantity: cart.lines[0]?.quantity ?? 1,
     name: fields.name.value,
     mobile: fields.mobile.value,
     district: fields.district.value,
     address: fields.address.value,
     area: areaValue(),
+    paymentMethod: paymentMethodValue(),
     note: fields.note.value,
   };
+}
+
+/* ── Cart badge ──────────────────────────────────────────────────────────── */
+
+function updateCartBadge(): void {
+  const badge = document.querySelector<HTMLElement>('[data-cart-count]');
+  if (!badge) return;
+  const count = cart.totalQuantity;
+  badge.textContent = count > 0 ? String(count) : '';
+  badge.hidden = count === 0;
 }
 
 /* ── Live summary ────────────────────────────────────────────────────────── */
 
 function currentTotals() {
-  const draft = readDraft();
-  const item = prices.get(draft.itemId);
-  return computeTotals(item?.price ?? 0, draft.quantity, draft.area, data.delivery);
+  return computeCartTotals(
+    [...cart.lines],
+    new Map([...prices.entries()].map(([k, v]) => [k, v.price])),
+    areaValue(),
+    data.delivery,
+  );
 }
 
 function renderSummary(): void {
@@ -97,13 +119,67 @@ function renderSummary(): void {
   set('delivery', formatBdt(delivery));
   set('total', formatBdt(total));
   set('total-inline', formatBdt(total));
+  set('total-inline-cod', formatBdt(total));
+  // Cart view summary
+  set('cart-subtotal', formatBdt(subtotal));
+  set('cart-delivery', formatBdt(delivery));
+  set('cart-total', formatBdt(total));
+}
 
-  // Keep the stepper honest about its own limits.
-  const qty = clampQuantity(fields.quantity.value);
-  form.querySelectorAll<HTMLButtonElement>('[data-qty]').forEach((btn) => {
-    const step = Number(btn.dataset.qty);
-    btn.disabled = step < 0 ? qty <= MIN_QTY : qty >= MAX_QTY;
-  });
+/* ── Cart view ───────────────────────────────────────────────────────────── */
+
+function renderCartView(): void {
+  const list = $<HTMLUListElement>('[data-cart-list]', dialog);
+  const empty = $<HTMLElement>('[data-cart-empty]', dialog);
+  const foot = $<HTMLElement>('[data-cart-foot]', dialog);
+  if (!list || !empty || !foot) return;
+
+  const isEmpty = cart.isEmpty;
+  empty.hidden = !isEmpty;
+  list.hidden = isEmpty;
+  foot.hidden = isEmpty;
+
+  if (isEmpty) return;
+
+  list.innerHTML = '';
+  for (const line of cart.lines) {
+    const item = prices.get(line.itemId);
+    if (!item) continue;
+
+    const li = document.createElement('li');
+    li.className = 'cart-item';
+    li.innerHTML = `
+      <div class="cart-item-name">${item.name}</div>
+      <div class="cart-item-stepper">
+        <button type="button" class="cart-step" data-cart-dec="${line.itemId}"
+          aria-label="পরিমাণ কমান" ${line.quantity <= 1 ? 'disabled' : ''}>−</button>
+        <span class="cart-qty">${line.quantity}</span>
+        <button type="button" class="cart-step" data-cart-inc="${line.itemId}"
+          aria-label="পরিমাণ বাড়ান" ${line.quantity >= 10 ? 'disabled' : ''}>+</button>
+      </div>
+      <div class="cart-item-price">${formatBdt(item.price * line.quantity)}</div>
+      <button type="button" class="cart-remove" data-cart-remove="${line.itemId}" aria-label="${item.name} সরান">✕</button>
+    `;
+    list.append(li);
+  }
+
+  renderSummary();
+}
+
+/* ── Cart recap in form view ─────────────────────────────────────────────── */
+
+function renderCartRecap(): void {
+  const recap = $('[data-cart-recap]', dialog);
+  if (!recap) return;
+  recap.innerHTML = '';
+  for (const line of cart.lines) {
+    const item = prices.get(line.itemId);
+    if (!item) continue;
+    const p = document.createElement('p');
+    p.className = 'recap-item';
+    p.innerHTML = `<span class="recap-name">${item.name} × ${line.quantity}</span><span class="recap-qty-price">${formatBdt(item.price * line.quantity)}</span>`;
+    recap.append(p);
+  }
 }
 
 /* ── Errors ──────────────────────────────────────────────────────────────── */
@@ -114,7 +190,7 @@ function showErrors(errors: Errors): void {
     const message = errors[field] ?? '';
     if (slot) slot.textContent = message;
 
-    const control = form.querySelector<HTMLElement>(`[name="${field === 'itemId' ? 'itemId' : field}"]`);
+    const control = form.querySelector<HTMLElement>(`[name="${field}"]`);
     if (control && control.tagName !== 'FIELDSET') {
       if (message) control.setAttribute('aria-invalid', 'true');
       else control.removeAttribute('aria-invalid');
@@ -130,9 +206,20 @@ function focusFirstError(errors: Errors): void {
   control?.scrollIntoView({ block: 'center', behavior: 'smooth' });
 }
 
+/* ── Payment method show/hide ────────────────────────────────────────────── */
+
+function updatePaymentUI(): void {
+  const method = paymentMethodValue();
+  dialog.querySelectorAll<HTMLElement>('[data-payment-target]').forEach((el) => {
+    el.hidden = el.dataset.paymentTarget !== method;
+  });
+}
+
 /* ── Views ───────────────────────────────────────────────────────────────── */
 
-function showView(which: 'form' | 'done'): void {
+type ViewName = 'cart' | 'form' | 'done';
+
+function showView(which: ViewName): void {
   let active: HTMLElement | null = null;
 
   dialog.querySelectorAll<HTMLElement>('[data-view]').forEach((view) => {
@@ -141,6 +228,13 @@ function showView(which: 'form' | 'done'): void {
   });
 
   $<HTMLElement>('.shell', dialog)?.scrollTo({ top: 0 });
+
+  // Update the dialog's aria-labelledby to point at the visible heading.
+  if (which === 'cart') {
+    dialog.setAttribute('aria-labelledby', 'checkout-title');
+  } else if (which === 'form') {
+    dialog.setAttribute('aria-labelledby', 'checkout-form-title');
+  }
 
   // Hiding the view that held focus would drop focus to <body>, which escapes
   // the dialog and leaves a screen reader with nothing announced. Move it to
@@ -187,11 +281,21 @@ function onSubmit(event: SubmitEvent): void {
   event.preventDefault();
   submitted = true;
 
+  if (cart.isEmpty) {
+    showView('cart');
+    return;
+  }
+
   const draft = readDraft();
   const errors = validateDraft(draft, {
-    itemIds: data.items.map((i) => i.id),
+    itemIds: [...prices.keys()],
     districts: districtValues,
+    paymentMethods: data.paymentMethods,
   });
+
+  // itemId / quantity are cart-driven — remove any phantom errors for those
+  delete errors.itemId;
+  delete errors.quantity;
 
   showErrors(errors);
 
@@ -200,15 +304,25 @@ function onSubmit(event: SubmitEvent): void {
     return;
   }
 
-  const item = prices.get(draft.itemId)!;
-  const totals = computeTotals(item.price, draft.quantity, draft.area, data.delivery);
+  const totals = currentTotals();
   const orderId = makeOrderId(data.orderPrefix);
   const mobile = normaliseMobile(draft.mobile)!;
+  const method = paymentMethodValue();
+
+  // Build a readable product list for the WhatsApp message.
+  const productLines = cart.lines
+    .map((l) => {
+      const item = prices.get(l.itemId);
+      return item ? `${item.name} × ${l.quantity}` : null;
+    })
+    .filter(Boolean);
+
+  const productName = productLines.join(', ');
 
   const message = buildOrderMessage({
     orderId,
-    productName: item.name,
-    quantity: draft.quantity,
+    productName,
+    quantity: cart.totalQuantity,
     subtotal: totals.subtotal,
     deliveryCharge: totals.delivery,
     total: totals.total,
@@ -216,7 +330,8 @@ function onSubmit(event: SubmitEvent): void {
     mobile,
     address: draft.address,
     district: draft.district,
-    bkashNumber: data.bkashNumber,
+    paymentMethod: method,
+    bkashNumber: method === 'bkash' ? data.bkashNumber : undefined,
     note: draft.note,
   });
 
@@ -230,10 +345,9 @@ function onSubmit(event: SubmitEvent): void {
     area: draft.area,
   });
 
-  track('Lead', { value: totals.total, currency: 'BDT', content_name: item.name });
+  track('Lead', { value: totals.total, currency: 'BDT', content_name: productName });
 
-  // Fill the success view before navigating, so it is already correct if the
-  // new tab steals focus or the redirect is blocked.
+  // Fill the success view before navigating.
   const setDone = (key: string, value: string) => {
     const el = dialog.querySelector(`[data-done="${key}"]`);
     if (el) el.textContent = value;
@@ -241,27 +355,68 @@ function onSubmit(event: SubmitEvent): void {
   setDone('orderId', `#${orderId}`);
   setDone('total', formatBdt(totals.total));
 
+  // Show/hide the bKash row on the success screen depending on payment method.
+  dialog.querySelectorAll<HTMLElement>('[data-done-bkash]').forEach((el) => {
+    el.hidden = method !== 'bkash';
+  });
+  const remind = $<HTMLElement>('[data-done-bkash-remind]', dialog);
+  if (remind) remind.hidden = method !== 'bkash';
+
   const again = dialog.querySelector<HTMLAnchorElement>('[data-done="wa"]');
   if (again) again.href = url;
+
+  // Clear cart only after we've built the message.
+  cart.clear();
+  updateCartBadge();
 
   showView('done');
   window.open(url, '_blank', 'noopener');
 }
 
+/* ── Toast (add to cart feedback) ───────────────────────────────────────── */
+
+let toastTimer = 0;
+
+export function showAddedToast(itemName: string): void {
+  let toast = document.querySelector<HTMLElement>('[data-cart-toast]');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.setAttribute('data-cart-toast', '');
+    toast.setAttribute('role', 'status');
+    toast.setAttribute('aria-live', 'polite');
+    document.body.append(toast);
+  }
+  toast.textContent = `✓ ${itemName} কার্টে যোগ হয়েছে`;
+  toast.classList.add('toast-show');
+  clearTimeout(toastTimer);
+  toastTimer = window.setTimeout(() => toast!.classList.remove('toast-show'), 2200);
+}
+
 /* ── Open / close ────────────────────────────────────────────────────────── */
 
-export function openCheckout(itemId?: string, trigger?: HTMLElement | null): void {
+export function addToCart(itemId: string, trigger?: HTMLElement | null): void {
+  const item = prices?.get(itemId);
+  cart.add(itemId);
+  updateCartBadge();
+  if (item) showAddedToast(item.name);
+  // Warm the checkout bundle (already loaded since we're here), but do not open.
+  void trigger;
+}
+
+export function openCart(trigger?: HTMLElement | null): void {
   lastTrigger = trigger ?? null;
-
-  if (itemId && prices.has(itemId)) {
-    fields.itemId.value = itemId;
-  }
-
-  showView('form');
-  renderSummary();
-
+  renderCartView();
+  showView('cart');
   if (!dialog.open) dialog.showModal();
-  track('InitiateCheckout', { content_name: prices.get(fields.itemId.value)?.name });
+}
+
+export function openCheckout(itemId?: string, trigger?: HTMLElement | null): void {
+  // Legacy compatibility: if called with an itemId, add it first then open cart.
+  if (itemId && prices?.has(itemId)) {
+    cart.add(itemId);
+    updateCartBadge();
+  }
+  openCart(trigger);
 }
 
 /* ── Init ────────────────────────────────────────────────────────────────── */
@@ -272,10 +427,9 @@ export function initCheckout(): void {
 
   data = JSON.parse($<HTMLScriptElement>('#checkout-data')!.textContent ?? '{}') as CheckoutData;
   prices = new Map(data.items.map((i) => [i.id, { name: i.name, price: i.price }]));
+  cart = new CartStore();
 
   fields = {
-    itemId: form.elements.namedItem('itemId') as HTMLSelectElement,
-    quantity: form.elements.namedItem('quantity') as HTMLInputElement,
     name: form.elements.namedItem('name') as HTMLInputElement,
     mobile: form.elements.namedItem('mobile') as HTMLInputElement,
     district: form.elements.namedItem('district') as HTMLSelectElement,
@@ -300,34 +454,82 @@ export function initCheckout(): void {
     if (outside) outside.checked = true;
   }
 
+  // Update badge in case cart was persisted.
+  updateCartBadge();
+
   form.addEventListener('submit', onSubmit);
 
   form.addEventListener('input', () => {
     renderSummary();
-    // Only re-validate live once they have tried to submit, so the form never
-    // turns red while someone is still halfway through typing their name.
     if (submitted) {
       showErrors(
         validateDraft(readDraft(), {
-          itemIds: data.items.map((i) => i.id),
+          itemIds: [...prices.keys()],
           districts: districtValues,
+          paymentMethods: data.paymentMethods,
         }),
       );
     }
   });
 
-  form.addEventListener('change', renderSummary);
-
-  form.addEventListener('click', (event) => {
-    const step = (event.target as HTMLElement).closest<HTMLButtonElement>('[data-qty]');
-    if (!step) return;
-    fields.quantity.value = String(clampQuantity(Number(fields.quantity.value) + Number(step.dataset.qty)));
+  form.addEventListener('change', (event) => {
+    const target = event.target as HTMLElement | null;
+    if (target === fields.district && fields.district.value) {
+      const isDhaka = fields.district.value === 'ঢাকা';
+      const radio = form.querySelector<HTMLInputElement>(isDhaka ? '#co-area-inside' : '#co-area-outside');
+      if (radio) radio.checked = true;
+    }
     renderSummary();
+    updatePaymentUI();
   });
 
+  // Cart view: stepper and remove buttons (delegated).
   dialog.addEventListener('click', (event) => {
     const target = event.target as HTMLElement;
 
+    // Cart view controls
+    const dec = target.closest<HTMLElement>('[data-cart-dec]');
+    if (dec) {
+      const id = dec.dataset.cartDec!;
+      const line = cart.lines.find((l) => l.itemId === id);
+      if (line && line.quantity > 1) {
+        cart.setQty(id, line.quantity - 1);
+      } else {
+        cart.remove(id);
+      }
+      updateCartBadge();
+      renderCartView();
+      return;
+    }
+
+    const inc = target.closest<HTMLElement>('[data-cart-inc]');
+    if (inc) {
+      const id = inc.dataset.cartInc!;
+      const line = cart.lines.find((l) => l.itemId === id);
+      cart.setQty(id, (line?.quantity ?? 0) + 1);
+      updateCartBadge();
+      renderCartView();
+      return;
+    }
+
+    const remove = target.closest<HTMLElement>('[data-cart-remove]');
+    if (remove) {
+      cart.remove(remove.dataset.cartRemove!);
+      updateCartBadge();
+      renderCartView();
+      return;
+    }
+
+    // "Proceed to checkout" in cart view.
+    if (target.closest('[data-cart-checkout]')) {
+      renderCartRecap();
+      renderSummary();
+      updatePaymentUI();
+      showView('form');
+      return;
+    }
+
+    // Copy button.
     const copy = target.closest<HTMLElement>('[data-copy]');
     if (copy) {
       void copyNumber(copy);
@@ -339,9 +541,7 @@ export function initCheckout(): void {
       return;
     }
 
-    // Clicking the backdrop closes. The dialog element itself fills the
-    // viewport; .shell is the visible card, so a click that lands on the
-    // dialog but not the shell is a backdrop click.
+    // Clicking the backdrop closes.
     if (target === dialog) dialog.close();
   });
 
@@ -353,5 +553,23 @@ export function initCheckout(): void {
     lastTrigger = null;
   });
 
+  // Initial payment UI state.
+  updatePaymentUI();
   renderSummary();
 }
+
+/* ── Toast styles (injected once, tiny) ─────────────────────────────────── */
+
+const toastStyle = document.createElement('style');
+toastStyle.textContent = `
+[data-cart-toast]{
+  position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 5.5rem);right:1rem;
+  z-index:200;padding:.55rem 1rem;border-radius:var(--radius-pill,999px);
+  background:var(--color-ink,#131313);color:#fff;font-size:.8125rem;font-weight:600;
+  opacity:0;transform:translateY(.5rem);transition:opacity 220ms,transform 220ms;
+  pointer-events:none;
+}
+[data-cart-toast].toast-show{opacity:1;transform:translateY(0);}
+@media(min-width:48rem){[data-cart-toast]{bottom:2rem;}}
+`;
+document.head.append(toastStyle);

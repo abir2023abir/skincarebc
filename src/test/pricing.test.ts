@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { clampQuantity, computeTotals, deliveryFor, savingsPercent } from '~/lib/pricing';
+import { clampQuantity, computeTotals, computeCartTotals, deliveryFor, savingsPercent } from '~/lib/pricing';
 import { makeOrderId, prefixFromBrand } from '~/lib/orderId';
 import { formatBdt } from '~/lib/formatBdt';
 
-const charges = { insideRajshahi: 60, outsideRajshahi: 120 };
+const charges = { insideDhaka: 60, outsideDhaka: 130, insideRajshahi: 60, outsideRajshahi: 130 };
 
 describe('clampQuantity', () => {
   it('keeps whole numbers inside 1–10', () => {
@@ -33,8 +33,8 @@ describe('computeTotals', () => {
     });
     expect(computeTotals(850, 2, 'outside', charges)).toEqual({
       subtotal: 1700,
-      delivery: 120,
-      total: 1820,
+      delivery: 130,
+      total: 1830,
     });
   });
 
@@ -51,8 +51,8 @@ describe('computeTotals', () => {
 describe('deliveryFor', () => {
   it('reads the charge straight from config', () => {
     expect(deliveryFor('inside', charges)).toBe(60);
-    expect(deliveryFor('outside', charges)).toBe(120);
-    expect(deliveryFor('inside', { insideRajshahi: 0, outsideRajshahi: 150 })).toBe(0);
+    expect(deliveryFor('outside', charges)).toBe(130);
+    expect(deliveryFor('inside', { insideDhaka: 0, outsideDhaka: 150 })).toBe(0);
   });
 });
 
@@ -63,6 +63,43 @@ describe('savingsPercent', () => {
     expect(savingsPercent(1000)).toBe(0);
     expect(savingsPercent(1000, 900)).toBe(0);
     expect(savingsPercent(1000, 1000)).toBe(0);
+  });
+});
+
+describe('computeCartTotals', () => {
+  const prices = new Map([
+    ['serum', 850],
+    ['wash', 650],
+  ]);
+
+  it('sums all lines and adds one delivery charge', () => {
+    expect(
+      computeCartTotals(
+        [{ itemId: 'serum', quantity: 2 }, { itemId: 'wash', quantity: 1 }],
+        prices,
+        'inside',
+        charges,
+      ),
+    ).toEqual({ subtotal: 2350, delivery: 60, total: 2410 });
+  });
+
+  it('returns zero delivery for an empty cart', () => {
+    expect(computeCartTotals([], prices, 'inside', charges)).toEqual({
+      subtotal: 0,
+      delivery: 0,
+      total: 0,
+    });
+  });
+
+  it('ignores unknown item ids gracefully', () => {
+    const result = computeCartTotals([{ itemId: 'ghost', quantity: 1 }], prices, 'inside', charges);
+    expect(result.subtotal).toBe(0);
+    expect(result.delivery).toBe(60);
+  });
+
+  it('clamps quantity per line before pricing', () => {
+    const result = computeCartTotals([{ itemId: 'serum', quantity: 99 }], prices, 'inside', charges);
+    expect(result.subtotal).toBe(850 * 10);
   });
 });
 

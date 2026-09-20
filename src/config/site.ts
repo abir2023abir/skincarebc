@@ -103,7 +103,12 @@ export interface SiteConfig {
   whatsappNumber: string;
   bkashNumber: string;
   bkashAccountType: 'Personal' | 'Agent' | 'Merchant';
-  deliveryCharge: { insideRajshahi: number; outsideRajshahi: number };
+  deliveryCharge: {
+    insideDhaka: number;
+    outsideDhaka: number;
+    insideRajshahi?: number;
+    outsideRajshahi?: number;
+  };
   /** Empty string disables the Meta Pixel entirely — nothing is loaded. */
   facebookPixelId: string;
   facebookPage: string;
@@ -129,13 +134,15 @@ export interface SiteConfig {
   routineMap: Record<Exclude<ProductLine, 'unisex'>, Partial<Record<RoutineStepId, string>>>;
   policies: { delivery: string; returns: string; authenticity: string };
   seo: { title: string; description: string; ogImage: string };
+  /** Enable/disable payment methods. At least one must be true. */
+  paymentMethods: { cod: boolean; bkash: boolean };
 }
 
 export const site = {
   // ── Business identity ─────────────────────────────────────────────────────
-  brandName: 'BRAND_NAME', // REPLACE
-  brandNameBn: 'ব্র্যান্ড নাম', // REPLACE
-  orderPrefix: 'GS', // REPLACE — two letters from the brand, used in order IDs
+  brandName: 'Aurora', // temporary working name
+  brandNameBn: 'অরোরা', // temporary working name
+  orderPrefix: 'AU', // — two letters from the brand, used in order IDs
   tagline: 'পরিষ্কার উপাদান। দৃশ্যমান ফল।', // «placeholder»
   taglineEn: 'Clean actives. Visible results.', // «placeholder»
 
@@ -149,12 +156,21 @@ export const site = {
   phone: '01XXXXXXXXX', // REPLACE
   facebookPage: 'https://facebook.com/REPLACE_ME',
   address: 'BUSINESS_ADDRESS, রাজশাহী', // REPLACE
-  deliveryTime: 'রাজশাহীর ভিতরে ২৪ ঘণ্টা, বাইরে ২–৩ দিন', // «placeholder»
+  deliveryTime: 'ঢাকার ভিতরে ২৪ ঘণ্টা, বাইরে ২–৩ দিন', // «placeholder»
 
   // ── Money ─────────────────────────────────────────────────────────────────
   deliveryCharge: {
+    insideDhaka: 60,
+    outsideDhaka: 130,
     insideRajshahi: 60,
-    outsideRajshahi: 120,
+    outsideRajshahi: 130,
+  },
+
+  // ── Payment methods ───────────────────────────────────────────────────────
+  // Set cod: true to show Cash on Delivery as an option in the checkout form.
+  paymentMethods: {
+    cod: true,
+    bkash: true,
   },
 
   // ── Tracking. Empty string = no pixel script is loaded at all. ────────────
@@ -199,7 +215,7 @@ export const site = {
         'উপরে ময়েশ্চারাইজার লাগান।',
         'দিনে ব্যবহার করলে অবশ্যই সানস্ক্রিন দিন।',
       ],
-      image: '/products/vitamin-c-glow-serum.png',
+      image: '/products/vitamin-c-glow-serum.jpg',
       imageAlt: 'Vitamin C Glow Serum-এর ৩০ মিলি ড্রপার বোতল',
     },
     {
@@ -219,7 +235,7 @@ export const site = {
         'মুখ ও গলায় উপরের দিকে টেনে লাগান।',
         'সকাল ও রাতে ব্যবহার করুন।',
       ],
-      image: '/products/hydra-barrier-moisturizer.png',
+      image: '/products/hydra-barrier-moisturizer.jpg',
       imageAlt: 'Hydra Barrier Moisturizer-এর ৫০ মিলি জার',
     },
     {
@@ -240,7 +256,7 @@ export const site = {
         '৩০ সেকেন্ড বৃত্তাকারে ম্যাসাজ করুন।',
         'ঠান্ডা পানিতে ধুয়ে ফেলুন। দিনে সর্বোচ্চ দুইবার।',
       ],
-      image: '/products/oil-control-face-wash.png',
+      image: '/products/oil-control-face-wash.jpg',
       imageAlt: 'Oil Control Face Wash-এর ১০০ মিলি টিউব',
     },
     {
@@ -260,7 +276,7 @@ export const site = {
         'অল্প পরিমাণ বাম নিয়ে হালকা চেপে লাগান।',
         'শেভ না করলেও রাতে ব্যবহার করতে পারেন।',
       ],
-      image: '/products/after-shave-calm-balm.png',
+      image: '/products/after-shave-calm-balm.jpg',
       imageAlt: 'After Shave Calm Balm-এর ৭৫ মিলি বোতল',
     },
   ],
@@ -420,7 +436,7 @@ export const site = {
   faq: [
     {
       q: 'ডেলিভারিতে কত দিন লাগে?',
-      a: 'রাজশাহী শহরের ভিতরে সাধারণত ২৪ ঘণ্টার মধ্যে পৌঁছে যায়। রাজশাহীর বাইরে কুরিয়ারে ২–৩ দিন লাগে। অর্ডার কনফার্ম হওয়ার পর WhatsApp-এ ট্র্যাকিং তথ্য জানিয়ে দেওয়া হয়।',
+      a: 'ঢাকা শহরের ভিতরে সাধারণত ২৪ ঘণ্টার মধ্যে পৌঁছে যায়। ঢাকার বাইরে কুরিয়ারে ২–৩ দিন লাগে। অর্ডার কনফার্ম হওয়ার পর WhatsApp-এ ট্র্যাকিং তথ্য জানিয়ে দেওয়া হয়।',
     },
     {
       q: 'প্রোডাক্ট আসল কিনা বুঝব কীভাবে?',
@@ -446,7 +462,7 @@ export const site = {
 
   policies: {
     delivery:
-      'রাজশাহী শহরের ভিতরে ডেলিভারি চার্জ ৳৬০, রাজশাহীর বাইরে ৳১২০। অর্ডার কনফার্ম হওয়ার পর শহরের ভিতরে ২৪ ঘণ্টা, বাইরে ২–৩ কর্মদিবস।',
+      'ঢাকা শহরের ভিতরে ডেলিভারি চার্জ ৳৬০, ঢাকার বাইরে ৳১৩০। অর্ডার কনফার্ম হওয়ার পর শহরের ভিতরে ২৪ ঘণ্টা, বাইরে ২–৩ কর্মদিবস।',
     returns:
       'পার্সেল খোলার ভিডিওসহ ২৪ ঘণ্টার মধ্যে জানালে ভুল বা ক্ষতিগ্রস্ত পণ্য বিনামূল্যে বদলে দেওয়া হয়। সিল খোলা প্রসাধনী ফেরতযোগ্য নয়।',
     authenticity:
@@ -454,7 +470,7 @@ export const site = {
   },
 
   seo: {
-    title: 'BRAND_NAME — নারী ও পুরুষের জন্য পরিচ্ছন্ন স্কিনকেয়ার', // REPLACE
+    title: 'Aurora — নারী ও পুরুষের জন্য পরিচ্ছন্ন স্কিনকেয়ার',
     description:
       'দাগ, তেল আর শুষ্কতার জন্য গবেষণাভিত্তিক উপাদানে তৈরি স্কিনকেয়ার। সারা বাংলাদেশে ডেলিভারি, bKash পেমেন্ট, WhatsApp-এ অর্ডার।', // «placeholder»
     ogImage: '/og.jpg',

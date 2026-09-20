@@ -61,8 +61,8 @@ Two markers to search for:
 
 ```ts
 deliveryCharge: {
-  insideRajshahi: 60,
-  outsideRajshahi: 120,
+  insideDhaka: 60,
+  outsideDhaka: 130,
 },
 ```
 

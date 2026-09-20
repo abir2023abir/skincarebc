@@ -1,0 +1,799 @@
+---
+/**
+ * Admin panel — DESIGN PREVIEW ONLY.
+ *
+ * Static route, no auth, no data layer. Dummy data is hardcoded below.
+ * Excluded from the sitemap via robots noindex.
+ *
+ * Reuses design tokens from tokens.css — it looks like the same product,
+ * not a bootstrap dashboard.
+ */
+
+const brandName = 'Aurora';
+
+// ── Dummy data ────────────────────────────────────────────────────────────────
+
+type Status = 'new' | 'confirmed' | 'shipped' | 'cancelled';
+type PaymentMethod = 'bkash' | 'cod';
+
+interface Order {
+  id: string;
+  customer: string;
+  phone: string;
+  district: string;
+  items: string;
+  total: number;
+  payment: PaymentMethod;
+  status: Status;
+  date: string;
+}
+
+const orders: Order[] = [
+  { id: 'AU-7K2M4P', customer: 'নুসরাত জাহান', phone: '01712345678', district: 'রাজশাহী', items: 'Vitamin C Glow Serum × 1', total: 1310, payment: 'bkash', status: 'new', date: 'আজ, ১৪:৩২' },
+  { id: 'AU-5N8Q1R', customer: 'তানভীর হাসান', phone: '01811223344', district: 'ঢাকা', items: 'After Shave Calm Balm × 2', total: 1900, payment: 'cod', status: 'confirmed', date: 'আজ, ১১:০৫' },
+  { id: 'AU-3R6T9W', customer: 'ফারহানা আক্তার', phone: '01955667788', district: 'চট্টগ্রাম', items: 'Glow Duo × 1', total: 2110, payment: 'bkash', status: 'shipped', date: 'গতকাল, ১৬:৫০' },
+  { id: 'AU-9P2L7X', customer: 'সাকিব রহমান', phone: '01633445566', district: 'সিলেট', items: 'Oil Control Face Wash × 3', total: 2070, payment: 'cod', status: 'new', date: 'গতকাল, ১০:১৫' },
+  { id: 'AU-4M1K8V', customer: 'মেহজাবিন ইসলাম', phone: '01799887766', district: 'খুলনা', items: 'Hydra Barrier Moisturizer × 1', total: 1010, payment: 'bkash', status: 'cancelled', date: '২ দিন আগে' },
+  { id: 'AU-6W3H5Z', customer: 'রাকিবুল ইসলাম', phone: '01522334455', district: 'রংপুর', items: 'Fresh Start × 1', total: 1510, payment: 'bkash', status: 'shipped', date: '২ দিন আগে' },
+];
+
+const todayOrders = orders.filter((o) => o.date.startsWith('আজ'));
+const todayRevenue = todayOrders.reduce((s, o) => s + (o.status !== 'cancelled' ? o.total : 0), 0);
+const pending = orders.filter((o) => o.status === 'new').length;
+
+const detailOrder = orders[0]!;
+
+interface Product {
+  id: string;
+  name: string;
+  size: string;
+  price: number;
+  line: string;
+  stock: number;
+}
+
+const products: Product[] = [
+  { id: 'vitamin-c-glow-serum', name: 'Vitamin C Glow Serum', size: '30ml', price: 1250, line: 'Her', stock: 42 },
+  { id: 'hydra-barrier-moisturizer', name: 'Hydra Barrier Moisturizer', size: '50ml', price: 950, line: 'Her', stock: 31 },
+  { id: 'oil-control-face-wash', name: 'Oil Control Face Wash', size: '100ml', price: 650, line: 'Him', stock: 57 },
+  { id: 'after-shave-calm-balm', name: 'After Shave Calm Balm', size: '75ml', price: 890, line: 'Him', stock: 19 },
+  { id: 'combo-glow-duo', name: 'Glow Duo (Combo)', size: '২টি পণ্য', price: 1990, line: 'Her', stock: 15 },
+  { id: 'combo-fresh-start', name: 'Fresh Start (Combo)', size: '২টি পণ্য', price: 1390, line: 'Him', stock: 22 },
+];
+
+const statusLabel: Record<Status, string> = {
+  new: 'নতুন',
+  confirmed: 'কনফার্মড',
+  shipped: 'পাঠানো হয়েছে',
+  cancelled: 'বাতিল',
+};
+
+function fmt(n: number): string {
+  return '৳' + n.toLocaleString('en-IN');
+}
+---
+
+<!doctype html>
+<html lang="bn">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Admin — {brandName}</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;700;800&family=Hind+Siliguri:wght@500;700&display=swap" rel="stylesheet" />
+  </head>
+
+  <body>
+    <!-- ── Preview banner ─────────────────────────────────────────────── -->
+    <div class="preview-bar" role="alert">
+      ⚠️ <strong>ডিজাইন প্রিভিউ</strong> — কোনো ডেটা সংরক্ষিত হচ্ছে না। ফর্ম ও বোতাম কাজ করে না।
+    </div>
+
+    <div class="layout">
+      <!-- ── Sidebar ───────────────────────────────────────────────── -->
+      <aside class="sidebar">
+        <a class="brand" href="/admin">
+          <span class="brand-dot" aria-hidden="true"></span>
+          <span>{brandName}</span>
+        </a>
+
+        <nav class="sidenav" aria-label="অ্যাডমিন বিভাগ">
+          <a class="sidenav-link active" href="#dashboard">
+            <span class="sidenav-icon" aria-hidden="true">📊</span>
+            <span>ড্যাশবোর্ড</span>
+          </a>
+          <a class="sidenav-link" href="#orders">
+            <span class="sidenav-icon" aria-hidden="true">📋</span>
+            <span>অর্ডার তালিকা</span>
+          </a>
+          <a class="sidenav-link" href="#order-detail">
+            <span class="sidenav-icon" aria-hidden="true">🔍</span>
+            <span>অর্ডার বিস্তারিত</span>
+          </a>
+          <a class="sidenav-link" href="#products">
+            <span class="sidenav-icon" aria-hidden="true">🧴</span>
+            <span>পণ্য তালিকা</span>
+          </a>
+        </nav>
+
+        <div class="sidebar-footer">
+          <a class="back-link" href="/">← মূল সাইট</a>
+        </div>
+      </aside>
+
+      <!-- ── Main ─────────────────────────────────────────────────── -->
+      <main class="main" id="main">
+
+        <!-- ─── Dashboard ──────────────────────────────────────────── -->
+        <section class="section" id="dashboard">
+          <h1 class="section-title">ড্যাশবোর্ড</h1>
+
+          <div class="stat-grid">
+            <div class="stat-card">
+              <p class="stat-label">আজকের অর্ডার</p>
+              <p class="stat-value">{todayOrders.length}</p>
+              <p class="stat-sub">মোট {orders.length}টি (সব)</p>
+            </div>
+            <div class="stat-card stat-card--orange">
+              <p class="stat-label">আজকের রেভিনিউ</p>
+              <p class="stat-value">{fmt(todayRevenue)}</p>
+              <p class="stat-sub">বাতিল ছাড়া</p>
+            </div>
+            <div class="stat-card">
+              <p class="stat-label">পেন্ডিং অর্ডার</p>
+              <p class="stat-value">{pending}</p>
+              <p class="stat-sub">কনফার্ম বাকি</p>
+            </div>
+          </div>
+
+          <div class="card recent-orders">
+            <div class="card-head">
+              <h2 class="card-title">সাম্প্রতিক অর্ডার</h2>
+            </div>
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>অর্ডার আইডি</th>
+                    <th>গ্রাহক</th>
+                    <th>পণ্য</th>
+                    <th>মোট</th>
+                    <th>স্ট্যাটাস</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {orders.slice(0, 4).map((o) => (
+                    <tr>
+                      <td class="mono">#{o.id}</td>
+                      <td>{o.customer}</td>
+                      <td class="mute">{o.items}</td>
+                      <td class="mono">{fmt(o.total)}</td>
+                      <td><span class={`chip chip--${o.status}`}>{statusLabel[o.status]}</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <div class="divider" role="separator"></div>
+
+        <!-- ─── Orders list ────────────────────────────────────────── -->
+        <section class="section" id="orders">
+          <div class="section-head">
+            <h2 class="section-title">অর্ডার তালিকা</h2>
+            <div class="section-actions">
+              <span class="filter-label">ফিল্টার:</span>
+              <button type="button" class="chip chip--new chip--btn">নতুন</button>
+              <button type="button" class="chip chip--confirmed chip--btn">কনফার্মড</button>
+              <button type="button" class="chip chip--shipped chip--btn">পাঠানো হয়েছে</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>অর্ডার আইডি</th>
+                    <th>তারিখ</th>
+                    <th>গ্রাহক</th>
+                    <th>ফোন</th>
+                    <th>জেলা</th>
+                    <th>পণ্য</th>
+                    <th>মোট</th>
+                    <th>পেমেন্ট</th>
+                    <th>স্ট্যাটাস</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {orders.map((o) => (
+                    <tr>
+                      <td class="mono">#{o.id}</td>
+                      <td class="mute small">{o.date}</td>
+                      <td>{o.customer}</td>
+                      <td class="mono small">{o.phone}</td>
+                      <td class="mute">{o.district}</td>
+                      <td class="mute small">{o.items}</td>
+                      <td class="mono">{fmt(o.total)}</td>
+                      <td>
+                        <span class={`chip ${o.payment === 'bkash' ? 'chip--bkash' : 'chip--cod'}`}>
+                          {o.payment === 'bkash' ? 'bKash' : 'COD'}
+                        </span>
+                      </td>
+                      <td><span class={`chip chip--${o.status}`}>{statusLabel[o.status]}</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <div class="divider" role="separator"></div>
+
+        <!-- ─── Single order detail ────────────────────────────────── -->
+        <section class="section" id="order-detail">
+          <h2 class="section-title">অর্ডার বিস্তারিত — #{detailOrder.id}</h2>
+
+          <div class="detail-grid">
+            <div class="card detail-card">
+              <h3 class="detail-heading">গ্রাহকের তথ্য</h3>
+              <dl class="detail-list">
+                <div><dt>নাম</dt><dd>{detailOrder.customer}</dd></div>
+                <div><dt>ফোন</dt><dd class="mono">{detailOrder.phone}</dd></div>
+                <div><dt>জেলা</dt><dd>{detailOrder.district}</dd></div>
+                <div><dt>ঠিকানা</dt><dd>বাড়ি ১২, রোড ৪, উপশহর, {detailOrder.district}</dd></div>
+              </dl>
+            </div>
+
+            <div class="card detail-card">
+              <h3 class="detail-heading">অর্ডারের বিবরণ</h3>
+              <dl class="detail-list">
+                <div><dt>অর্ডার আইডি</dt><dd class="mono">#{detailOrder.id}</dd></div>
+                <div><dt>তারিখ</dt><dd>{detailOrder.date}</dd></div>
+                <div><dt>পণ্য</dt><dd>{detailOrder.items}</dd></div>
+                <div><dt>মোট</dt><dd class="mono bold">{fmt(detailOrder.total)}</dd></div>
+                <div><dt>পেমেন্ট</dt><dd><span class="chip chip--bkash">bKash</span></dd></div>
+                <div>
+                  <dt>স্ট্যাটাস</dt>
+                  <dd>
+                    <span class={`chip chip--${detailOrder.status}`}>{statusLabel[detailOrder.status]}</span>
+                    <span class="preview-note">(পরিবর্তন প্রিভিউতে অক্ষম)</span>
+                  </dd>
+                </div>
+              </dl>
+            </div>
+          </div>
+
+          <div class="detail-actions">
+            <button type="button" class="btn btn-ghost" disabled>কনফার্ম করুন</button>
+            <button type="button" class="btn btn-ghost" disabled>পাঠানো হয়েছে চিহ্নিত করুন</button>
+            <button type="button" class="btn btn-danger" disabled>বাতিল করুন</button>
+          </div>
+        </section>
+
+        <div class="divider" role="separator"></div>
+
+        <!-- ─── Products list ──────────────────────────────────────── -->
+        <section class="section" id="products">
+          <div class="section-head">
+            <h2 class="section-title">পণ্য তালিকা</h2>
+            <button type="button" class="btn btn-primary" disabled>+ নতুন পণ্য</button>
+          </div>
+
+          <div class="card">
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>নাম</th>
+                    <th>সাইজ</th>
+                    <th>দাম</th>
+                    <th>লাইন</th>
+                    <th>স্টক (ডামি)</th>
+                    <th>অ্যাকশন</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {products.map((p) => (
+                    <tr>
+                      <td class="product-name">{p.name}</td>
+                      <td class="mute small">{p.size}</td>
+                      <td class="mono">{fmt(p.price)}</td>
+                      <td>
+                        <span class={`chip ${p.line === 'Her' ? 'chip--her' : 'chip--him'}`}>
+                          {p.line}
+                        </span>
+                      </td>
+                      <td>
+                        <span class={`stock ${p.stock < 20 ? 'stock--low' : ''}`}>
+                          {p.stock} পিস {p.stock < 20 ? '⚠️' : ''}
+                        </span>
+                      </td>
+                      <td>
+                        <button type="button" class="btn-row" disabled>সম্পাদনা</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </body>
+</html>
+
+<style>
+  /* ── Tokens ─────────────────────────────────────────────────────────── */
+  :root {
+    --color-page: #f0efed;
+    --color-card: #ffffff;
+    --color-ink: #131313;
+    --color-ink-2: #2e2e2e;
+    --color-ink-soft: #565656;
+    --color-ink-mute: #6a6a6a;
+    --color-orange: #c24d10;
+    --color-orange-deep: #a64109;
+    --color-orange-bright: #f2701e;
+    --color-green: #4f6349;
+    --color-line: color-mix(in oklab, #131313 10%, transparent);
+    --color-line-strong: color-mix(in oklab, #131313 20%, transparent);
+    --font-display: 'Poppins', 'Segoe UI', sans-serif;
+    --font-bn: 'Hind Siliguri', 'Poppins', 'Nirmala UI', sans-serif;
+    --radius-sm: 10px;
+    --radius-md: 18px;
+    --radius-lg: 28px;
+    --radius-pill: 999px;
+    --shadow-card: 0 1px 2px rgb(19 19 19 / 0.04), 0 12px 32px -12px rgb(19 19 19 / 0.10);
+    --shadow-float: 0 8px 24px -8px rgb(19 19 19 / 0.14), 0 32px 64px -32px rgb(19 19 19 / 0.18);
+    --dur-fast: 180ms;
+    --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    background: var(--color-page);
+    color: var(--color-ink);
+    font-family: var(--font-bn);
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Preview bar ─────────────────────────────────────────────────────── */
+  .preview-bar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1rem;
+    background: color-mix(in oklab, var(--color-orange) 12%, var(--color-card));
+    border-bottom: 2px solid var(--color-orange);
+    font-size: 0.8125rem;
+    text-align: center;
+    font-family: var(--font-bn);
+  }
+
+  /* ── Layout ──────────────────────────────────────────────────────────── */
+  .layout {
+    display: flex;
+    min-height: 100dvh;
+  }
+
+  /* ── Sidebar ─────────────────────────────────────────────────────────── */
+  .sidebar {
+    position: sticky;
+    top: 0;
+    height: 100dvh;
+    width: 14rem;
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem 1rem;
+    background: var(--color-card);
+    border-right: 1px solid var(--color-line);
+    overflow-y: auto;
+  }
+
+  @media (max-width: 56rem) {
+    .sidebar { display: none; }
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.125rem;
+    margin-bottom: 2rem;
+    text-decoration: none;
+    color: var(--color-ink);
+  }
+
+  .brand-dot {
+    width: 0.6rem;
+    height: 0.6rem;
+    border-radius: var(--radius-pill);
+    background: var(--color-orange-bright);
+    flex: none;
+  }
+
+  .sidenav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    flex: 1;
+  }
+
+  .sidenav-link {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.65rem 0.75rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-ink-soft);
+    text-decoration: none;
+    transition: background-color var(--dur-fast) var(--ease-out-soft), color var(--dur-fast) var(--ease-out-soft);
+  }
+
+  .sidenav-link:hover,
+  .sidenav-link.active {
+    background: color-mix(in oklab, var(--color-orange) 10%, var(--color-page));
+    color: var(--color-orange-deep);
+  }
+
+  .sidenav-icon {
+    font-size: 1rem;
+  }
+
+  .sidebar-footer {
+    padding-top: 1rem;
+    border-top: 1px solid var(--color-line);
+  }
+
+  .back-link {
+    font-size: 0.8125rem;
+    color: var(--color-ink-mute);
+    text-decoration: none;
+  }
+
+  .back-link:hover { color: var(--color-ink); }
+
+  /* ── Main ────────────────────────────────────────────────────────────── */
+  .main {
+    flex: 1;
+    min-width: 0;
+    padding: 2rem clamp(1rem, 4vw, 2.5rem);
+  }
+
+  .section {
+    scroll-margin-top: 1rem;
+  }
+
+  .section-title {
+    font-family: var(--font-display);
+    font-size: clamp(1.25rem, 2vw, 1.75rem);
+    font-weight: 800;
+    margin: 0 0 1.25rem;
+  }
+
+  .section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.25rem;
+  }
+
+  .section-head .section-title {
+    margin: 0;
+  }
+
+  .section-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+  }
+
+  .filter-label {
+    font-size: 0.8125rem;
+    color: var(--color-ink-mute);
+  }
+
+  .divider {
+    margin: 3rem 0;
+    border-top: 1px solid var(--color-line);
+  }
+
+  /* ── Stat grid ───────────────────────────────────────────────────────── */
+  .stat-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+    margin-bottom: 1.5rem;
+  }
+
+  .stat-card {
+    background: var(--color-card);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-card);
+    padding: 1.25rem 1.5rem;
+    display: grid;
+    gap: 0.25rem;
+  }
+
+  .stat-card--orange {
+    background: color-mix(in oklab, var(--color-orange) 10%, var(--color-card));
+    border: 1.5px solid var(--color-orange);
+  }
+
+  .stat-label {
+    font-size: 0.8125rem;
+    color: var(--color-ink-mute);
+    font-weight: 600;
+    margin: 0;
+  }
+
+  .stat-value {
+    font-family: var(--font-display);
+    font-size: clamp(1.75rem, 3vw, 2.5rem);
+    font-weight: 800;
+    margin: 0;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+  }
+
+  .stat-sub {
+    font-size: 0.75rem;
+    color: var(--color-ink-mute);
+    margin: 0;
+  }
+
+  /* ── Card ────────────────────────────────────────────────────────────── */
+  .card {
+    background: var(--color-card);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+  }
+
+  .card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.15rem 1.5rem 0.75rem;
+    border-bottom: 1px solid var(--color-line);
+  }
+
+  .card-title {
+    font-size: 0.9375rem;
+    font-weight: 700;
+    margin: 0;
+  }
+
+  /* ── Table ───────────────────────────────────────────────────────────── */
+  .table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+  }
+
+  .table th {
+    padding: 0.7rem 1rem;
+    text-align: left;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--color-ink-mute);
+    background: color-mix(in oklab, var(--color-ink) 3%, var(--color-card));
+    white-space: nowrap;
+  }
+
+  .table td {
+    padding: 0.8rem 1rem;
+    border-top: 1px solid var(--color-line);
+    vertical-align: middle;
+  }
+
+  .table tr:hover td {
+    background: color-mix(in oklab, var(--color-page) 60%, var(--color-card));
+  }
+
+  .mono {
+    font-family: var(--font-display);
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    font-size: 0.875rem;
+  }
+
+  .mute { color: var(--color-ink-soft); }
+  .small { font-size: 0.8125rem; }
+  .bold { font-weight: 800; }
+
+  /* ── Status chips ────────────────────────────────────────────────────── */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.15rem 0.6rem;
+    border-radius: var(--radius-pill);
+    font-size: 0.75rem;
+    font-weight: 700;
+    white-space: nowrap;
+    border: 0;
+    cursor: default;
+  }
+
+  .chip--btn {
+    cursor: pointer;
+    min-height: 2rem;
+    padding-inline: 0.75rem;
+  }
+
+  .chip--new { background: color-mix(in oklab, #3b82f6 15%, transparent); color: #1d4ed8; }
+  .chip--confirmed { background: color-mix(in oklab, var(--color-green) 15%, transparent); color: var(--color-green); }
+  .chip--shipped { background: color-mix(in oklab, var(--color-orange) 12%, transparent); color: var(--color-orange-deep); }
+  .chip--cancelled { background: color-mix(in oklab, #ef4444 12%, transparent); color: #b91c1c; }
+  .chip--bkash { background: color-mix(in oklab, var(--color-ink) 10%, transparent); color: var(--color-ink-2); }
+  .chip--cod { background: color-mix(in oklab, var(--color-green) 12%, transparent); color: var(--color-green); }
+  .chip--her { background: color-mix(in oklab, #ec4899 12%, transparent); color: #be185d; }
+  .chip--him { background: color-mix(in oklab, #3b82f6 12%, transparent); color: #1e40af; }
+
+  /* ── Detail grid ─────────────────────────────────────────────────────── */
+  .detail-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+    margin-bottom: 1.25rem;
+  }
+
+  .detail-card {
+    padding: 1.25rem 1.5rem;
+  }
+
+  .detail-heading {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--color-ink-mute);
+    margin: 0 0 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .detail-list {
+    display: grid;
+    gap: 0.6rem;
+    margin: 0;
+    padding: 0;
+  }
+
+  .detail-list > div {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.5rem;
+  }
+
+  .detail-list dt {
+    font-size: 0.8125rem;
+    color: var(--color-ink-mute);
+    flex: none;
+  }
+
+  .detail-list dd {
+    margin: 0;
+    font-weight: 600;
+    text-align: right;
+  }
+
+  .detail-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+  }
+
+  .preview-note {
+    font-size: 0.75rem;
+    color: var(--color-ink-mute);
+    margin-left: 0.4rem;
+    font-weight: 400;
+  }
+
+  /* ── Products ────────────────────────────────────────────────────────── */
+  .product-name {
+    font-weight: 600;
+  }
+
+  .stock { font-size: 0.875rem; }
+  .stock--low { color: #b91c1c; font-weight: 700; }
+
+  /* ── Buttons ─────────────────────────────────────────────────────────── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 2.75rem;
+    padding-inline: 1.25rem;
+    border-radius: var(--radius-pill);
+    font-size: 0.875rem;
+    font-weight: 700;
+    border: 0;
+    cursor: pointer;
+    font-family: var(--font-bn);
+    transition: background-color var(--dur-fast) var(--ease-out-soft);
+  }
+
+  .btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  .btn-primary {
+    background: var(--color-ink);
+    color: #fff;
+  }
+
+  .btn-primary:not(:disabled):hover {
+    background: var(--color-orange);
+  }
+
+  .btn-ghost {
+    background: transparent;
+    border: 1.5px solid var(--color-line-strong);
+    color: var(--color-ink);
+  }
+
+  .btn-ghost:not(:disabled):hover {
+    border-color: var(--color-ink);
+  }
+
+  .btn-danger {
+    background: color-mix(in oklab, #ef4444 12%, var(--color-card));
+    color: #b91c1c;
+    border: 1.5px solid color-mix(in oklab, #ef4444 25%, transparent);
+  }
+
+  .btn-row {
+    padding: 0.3rem 0.75rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    background: var(--color-page);
+    border: 1px solid var(--color-line-strong);
+    cursor: pointer;
+    font-family: var(--font-bn);
+  }
+
+  .btn-row:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ── Recent orders card (no card-head) ──────────────────────────────── */
+  .recent-orders .table th:first-child,
+  .recent-orders .table td:first-child {
+    padding-left: 1.5rem;
+  }
+</style>

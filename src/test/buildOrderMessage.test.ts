@@ -13,11 +13,12 @@ const base: OrderMessageInput = {
   mobile: '01712345678',
   address: 'বাড়ি ১২, রোড ৪, উপশহর',
   district: 'রাজশাহী',
+  paymentMethod: 'bkash',
   bkashNumber: '01712345678',
 };
 
 describe('buildOrderMessage', () => {
-  it('renders the full template in order', () => {
+  it('renders the full template in order (bKash)', () => {
     expect(buildOrderMessage(base)).toBe(
       [
         'আসসালামু আলাইকুম, আমি একটি অর্ডার করতে চাই।',
@@ -38,6 +39,26 @@ describe('buildOrderMessage', () => {
         'আমি মোট ৳1,760 পাঠিয়েছি / পাঠাচ্ছি। ট্রানজেকশনের স্ক্রিনশট নিচে পাঠাচ্ছি।',
       ].join('\n'),
     );
+  });
+
+  it('renders the COD block when paymentMethod is cod', () => {
+    const msg = buildOrderMessage({ ...base, paymentMethod: 'cod', bkashNumber: undefined });
+    expect(msg).toContain('💳 Payment: ক্যাশ অন ডেলিভারি (COD)');
+    expect(msg).toContain('ডেলিভারির সময় মোট ৳1,760 কুরিয়ারকে পরিশোধ করুন।');
+    expect(msg).not.toContain('bKash');
+    expect(msg).not.toContain('পাঠিয়েছি');
+    expect(msg).not.toContain('স্ক্রিনশট');
+  });
+
+  it('COD block quotes the correct total', () => {
+    const msg = buildOrderMessage({
+      ...base,
+      paymentMethod: 'cod',
+      total: 2200,
+      subtotal: 2080,
+      deliveryCharge: 120,
+    });
+    expect(msg).toContain('মোট ৳2,200 কুরিয়ারকে পরিশোধ');
   });
 
   it('appends the note block only when a note is present', () => {

@@ -21,7 +21,7 @@ import Botanical from '~/components/ui/Botanical.astro';
 
 const hero = site.products[0]!;
 const heroBottle = productImage(hero.image);
-const modelHero = sceneImage('model-hero.png');
+const modelHero = sceneImage('model-hero.jpg');
 ---
 
 <section class="hero" id="top">
@@ -29,10 +29,10 @@ const modelHero = sceneImage('model-hero.png');
     <div class="panel hero-panel">
       {/* Scatter is deliberately off the panel's corners and away from every
           control — nothing decorative may sit over a tap target. */}
-      <Botanical file="sprig-dried.png" size={130} top="3%" left="-3.5%" rotate="-14deg" />
-      <Botanical file="sunflower.png" size={104} bottom="4%" right="31.5%" rotate="12deg" />
-      <Botanical file="leaf-autumn.png" size={92} bottom="-5%" right="-2.5%" rotate="-24deg" />
-      <Botanical file="sprig-green.png" size={96} top="-4%" right="16%" rotate="18deg" />
+      <Botanical file="sprig-green.png" size={120} top="2%" left="-4%" rotate="-18deg" />
+      <Botanical file="rose.png" size={104} bottom="2%" right="32%" rotate="8deg" />
+      <Botanical file="monstera.png" size={96} bottom="-6%" right="-2%" rotate="-18deg" />
+      <Botanical file="leaf-long.png" size={110} top="-5%" right="15%" rotate="24deg" />
 
       <div class="hero-grid">
         <!-- ── Copy ─────────────────────────────────────────────────── -->
@@ -63,9 +63,6 @@ const modelHero = sceneImage('model-hero.png');
           </p>
 
           <div class="promo-art">
-            <div class="depth" style="--depth: 0.3">
-              <span class="promo-shadow" aria-hidden="true"></span>
-            </div>
             <div class="depth" style="--depth: 1.4">
               <Image
                 src={heroBottle}
@@ -240,18 +237,13 @@ const modelHero = sceneImage('model-hero.png');
     transition: none;
   }
 
+  /* Photo fills the arch. The image is positioned inside .depth which already
+     covers the full promo-art area via position:absolute + inset:0. */
   .promo-art :global(img) {
-    width: 62%;
-    height: auto;
-  }
-
-  .promo-shadow {
-    width: 62%;
-    height: 14%;
-    align-self: end;
-    margin-bottom: 4%;
-    border-radius: 50%;
-    background: radial-gradient(closest-side, rgb(19 19 19 / 0.28), transparent);
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: var(--radius-md);
   }
 
   .promo-name {

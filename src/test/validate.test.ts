@@ -3,7 +3,11 @@ import { isValid, normaliseMobile, validateDraft } from '~/lib/validate';
 import type { OrderDraft } from '~/lib/validate';
 import { districts } from '~/lib/districts';
 
-const known = { itemIds: ['vitamin-c-glow-serum', 'combo-glow-duo'], districts };
+const known = {
+  itemIds: ['vitamin-c-glow-serum', 'combo-glow-duo'],
+  districts,
+  paymentMethods: ['bkash', 'cod'] as ('bkash' | 'cod')[],
+};
 
 const good: OrderDraft = {
   itemId: 'vitamin-c-glow-serum',
@@ -11,8 +15,9 @@ const good: OrderDraft = {
   name: 'নুসরাত জাহান',
   mobile: '01712345678',
   district: 'রাজশাহী',
-  address: 'বাড়ি ১২, রোড ৪, উপশহর',
+  address: 'বাড়ি ১২, রোড ৪, উপশহর',
   area: 'inside',
+  paymentMethod: 'bkash',
   note: '',
 };
 
@@ -54,6 +59,9 @@ describe('validateDraft', () => {
     expect(validateDraft({ ...good, quantity: 0 }, known).quantity).toBeDefined();
     expect(validateDraft({ ...good, quantity: 11 }, known).quantity).toBeDefined();
     expect(validateDraft({ ...good, itemId: 'nope' }, known).itemId).toBeDefined();
+    expect(
+      validateDraft({ ...good, paymentMethod: 'cod' }, { ...known, paymentMethods: ['bkash'] }).paymentMethod,
+    ).toBeDefined();
   });
 
   it('rejects a district that is not one of the 64', () => {

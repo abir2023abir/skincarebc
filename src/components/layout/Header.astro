@@ -32,8 +32,9 @@ import Icon from '~/components/ui/Icon.astro';
 
       <div class="actions">
         <span class="actions-label">অর্ডার</span>
-        <button type="button" class="bag" data-order-open="" aria-label="অর্ডার ফর্ম খুলুন">
+        <button type="button" class="bag" data-bag-open aria-label="কার্ট খুলুন">
           <Icon name="bag" size={19} />
+          <span class="bag-count" data-cart-count aria-live="polite" hidden></span>
         </button>
       </div>
     </div>
@@ -159,6 +160,7 @@ import Icon from '~/components/ui/Icon.astro';
   }
 
   .bag {
+    position: relative;
     display: grid;
     place-items: center;
     /* 44px — the accessibility floor. */
@@ -177,6 +179,24 @@ import Icon from '~/components/ui/Icon.astro';
   .bag:hover {
     background: var(--color-orange);
     transform: scale(1.05);
+  }
+
+  .bag-count {
+    position: absolute;
+    top: -0.3rem;
+    right: -0.3rem;
+    min-width: 1.1rem;
+    height: 1.1rem;
+    padding-inline: 0.2rem;
+    border-radius: var(--radius-pill);
+    background: var(--color-orange-bright);
+    color: var(--color-ink);
+    font-size: 0.6rem;
+    font-weight: 800;
+    line-height: 1.1rem;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
   }
 
   /* ── Responsive folding ──────────────────────────────────────────────── */

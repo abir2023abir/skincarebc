@@ -93,20 +93,36 @@ function loadCheckout() {
 
 function initCheckoutTriggers(): void {
   document.addEventListener('click', (event) => {
-    const trigger = (event.target as HTMLElement).closest<HTMLElement>('[data-order-open]');
-    if (!trigger) return;
-    event.preventDefault();
-    const itemId = trigger.dataset.orderOpen || undefined;
-    void loadCheckout().then((mod) => mod.openCheckout(itemId, trigger));
+    const target = event.target as HTMLElement;
+
+    // "Add to cart" button — adds item and shows a toast, does NOT open sheet.
+    const orderTrigger = target.closest<HTMLElement>('[data-order-open]');
+    if (orderTrigger) {
+      event.preventDefault();
+      const itemId = orderTrigger.dataset.orderOpen || undefined;
+      void loadCheckout().then((mod) => {
+        if (itemId) mod.addToCart(itemId, orderTrigger);
+        else mod.openCart(orderTrigger);
+      });
+      return;
+    }
+
+    // Header bag button — opens the cart view.
+    const bagTrigger = target.closest<HTMLElement>('[data-bag-open]');
+    if (bagTrigger) {
+      event.preventDefault();
+      void loadCheckout().then((mod) => mod.openCart(bagTrigger));
+    }
   });
 
-  // Warm the chunk as soon as a pointer approaches a trigger, so the sheet is
+  // Warm the chunk as soon as a pointer approaches any trigger, so the sheet is
   // instant on the actual press. Idempotent and only ever runs once.
   const warm = () => void loadCheckout();
   document.addEventListener(
     'pointerover',
     (event) => {
-      if ((event.target as HTMLElement).closest('[data-order-open]')) warm();
+      const t = event.target as HTMLElement;
+      if (t.closest('[data-order-open]') || t.closest('[data-bag-open]')) warm();
     },
     { once: true, passive: true },
   );

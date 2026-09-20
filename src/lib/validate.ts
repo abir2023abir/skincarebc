@@ -10,6 +10,7 @@ export interface OrderDraft {
   district: string;
   address: string;
   area: DeliveryArea;
+  paymentMethod: 'bkash' | 'cod';
   note: string;
 }
 
@@ -27,6 +28,8 @@ export type Errors = Partial<Record<FieldName, string>>;
 export interface KnownValues {
   itemIds: readonly string[];
   districts: readonly string[];
+  /** Which payment methods the site has enabled. */
+  paymentMethods: readonly ('bkash' | 'cod')[];
 }
 
 /**
@@ -78,6 +81,10 @@ export function validateDraft(draft: OrderDraft, known: KnownValues): Errors {
     errors.area = 'ডেলিভারি এলাকা বেছে নিন।';
   }
 
+  if (!known.paymentMethods.includes(draft.paymentMethod)) {
+    errors.paymentMethod = 'পেমেন্ট পদ্ধতি বেছে নিন।';
+  }
+
   return errors;
 }
 
@@ -94,5 +101,6 @@ export const FIELD_ORDER: readonly FieldName[] = [
   'district',
   'address',
   'area',
+  'paymentMethod',
   'note',
 ];

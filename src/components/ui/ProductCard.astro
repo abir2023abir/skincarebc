@@ -122,15 +122,17 @@ const rating = aggregateFor(product.id);
     background: var(--color-beige-deep);
   }
 
+  /* Photographs, so they fill the well rather than floating inside it. */
   .well :global(img) {
-    width: 56%;
-    height: auto;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
     transition: transform var(--dur-slow) var(--ease-out-soft);
   }
 
   @media (hover: hover) {
     .pcard:hover .well :global(img) {
-      transform: scale(1.06) rotate(-2deg);
+      transform: scale(1.05);
     }
   }
 

@@ -24,7 +24,7 @@ const lines = [
     label: 'For Her',
     labelBn: 'নারীদের জন্য',
     blurb: 'দাগ হালকা করা আর আর্দ্রতা ধরে রাখা — দুই ধাপে পরিষ্কার একটা রুটিন।', // «placeholder»
-    scene: 'model-hero.png',
+    scene: 'model-hero.jpg',
     sceneAlt: 'একজন নারী মুখে সিরাম লাগাচ্ছেন',
   },
   {
@@ -33,8 +33,10 @@ const lines = [
     label: 'For Him',
     labelBn: 'পুরুষদের জন্য',
     blurb: 'তেল নিয়ন্ত্রণ আর শেভের পরের আরাম — দিনে দুই মিনিটের যত্ন।', // «placeholder»
-    scene: 'model-square.png',
-    sceneAlt: 'পুরুষদের স্কিনকেয়ার প্রোডাক্টের ছবি',
+    // A product still, not a portrait: every model shot on the site is a
+    // woman, so a woman's face would read oddly at the head of "For Him".
+    scene: 'scene-3.jpg',
+    sceneAlt: 'পুরুষদের জন্য অয়েল কন্ট্রোল ও আফটার শেভ প্রোডাক্ট',
   },
 ];
 
@@ -257,8 +259,9 @@ const byLine = lines.map((line) => ({
   }
 
   .pick-thumb :global(img) {
-    width: 62%;
-    height: auto;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
 
   .pick-text {

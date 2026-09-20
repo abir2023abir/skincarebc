@@ -36,10 +36,10 @@ const tones = ['beige', 'sage', 'sand', 'beige'] as const;
             id={`story-${product.id}`}
           >
             {i === 0 && (
-              <Botanical file="sprig-green.png" size={88} top="-6%" right="4%" rotate="-18deg" />
+              <Botanical file="leaf-long.png" size={104} top="-5%" right="4%" rotate="-18deg" />
             )}
             {i === 2 && (
-              <Botanical file="rose.png" size={84} bottom="-5%" left="3%" rotate="12deg" />
+              <Botanical file="rose.png" size={92} bottom="-5%" left="3%" rotate="12deg" />
             )}
 
             {/* ── Sticky product well ──────────────────────────────── */}
@@ -185,6 +185,7 @@ const tones = ['beige', 'sage', 'sand', 'beige'] as const;
   .well::before {
     content: var(--index, '');
     position: absolute;
+    z-index: 2;
     top: 0.14em;
     left: 0.1em;
     font-family: var(--font-display);
@@ -192,26 +193,30 @@ const tones = ['beige', 'sage', 'sand', 'beige'] as const;
     font-size: var(--text-ghost);
     line-height: 1;
     letter-spacing: -0.04em;
-    color: color-mix(in oklab, var(--color-ink) 8%, transparent);
+    /* Over photography rather than a flat tint, so it needs to be light and
+       a touch stronger to read as an embossed index mark. */
+    color: color-mix(in oklab, #fff 55%, transparent);
+    mix-blend-mode: overlay;
     user-select: none;
     pointer-events: none;
   }
 
   .bottle {
-    position: relative;
-    width: 58%;
+    position: absolute;
+    inset: 0;
+    width: 100%;
     /* --p is written by motion/scroll.ts, 0 → 1 across the row. Absent JS it
        stays 0 and the bottle rests upright. */
     --p: 0;
     transform: rotate(calc((var(--p) - 0.5) * 14deg))
       scale(calc(0.94 + var(--p) * 0.12))
       translateY(calc((0.5 - var(--p)) * 18px));
-    filter: drop-shadow(0 26px 30px rgb(19 19 19 / 0.22));
   }
 
   .bottle :global(img) {
     width: 100%;
-    height: auto;
+    height: 100%;
+    object-fit: cover;
   }
 
   /* ── Detail column ───────────────────────────────────────────────────── */

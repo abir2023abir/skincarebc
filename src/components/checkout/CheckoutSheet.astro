@@ -15,10 +15,15 @@ import Icon from '~/components/ui/Icon.astro';
  * Prices and numbers are handed to the client as one small JSON island rather
  * than by importing site.ts, which would drag the whole Bangla catalogue into
  * the bundle for the sake of four numbers.
+ *
+ * Views: cart → form → done
  */
 
-const products = orderables.filter((o) => o.kind === 'product');
-const combos = orderables.filter((o) => o.kind === 'combo');
+
+const enabledMethods: ('bkash' | 'cod')[] = [
+  ...(site.paymentMethods.bkash ? ['bkash' as const] : []),
+  ...(site.paymentMethods.cod ? ['cod' as const] : []),
+];
 
 const checkoutData = {
   items: orderables.map((o) => ({ id: o.id, name: o.name, price: o.price })),
@@ -28,7 +33,10 @@ const checkoutData = {
   orderPrefix: site.orderPrefix,
   /** 'Send Money' for a personal wallet, 'Payment' for a merchant one. */
   bkashAction: site.bkashAccountType === 'Merchant' ? 'Payment' : 'Send Money',
+  paymentMethods: enabledMethods,
 };
+
+const showPaymentChoice = enabledMethods.length > 1;
 ---
 
 <script type="application/json" id="checkout-data" set:html={JSON.stringify(checkoutData)} is:inline
@@ -36,12 +44,58 @@ const checkoutData = {
 
 <dialog class="sheet" id="checkout" aria-labelledby="checkout-title" data-checkout>
   <div class="shell">
+    <!-- ── Cart view ─────────────────────────────────────────────────── -->
+    <div class="view" data-view="cart">
+      <header class="head">
+        <div>
+          <p class="eyebrow">শপিং ব্যাগ</p>
+          <h2 class="title" id="checkout-title">আপনার কার্ট</h2>
+        </div>
+        <button type="button" class="close" data-checkout-close aria-label="বন্ধ করুন">
+          <Icon name="close" size={20} />
+        </button>
+      </header>
+
+      <!-- Empty state -->
+      <div class="cart-empty" data-cart-empty>
+        <p class="cart-empty-icon" aria-hidden="true"><Icon name="bag" size={32} /></p>
+        <p class="cart-empty-text">আপনার কার্ট খালি।</p>
+        <p class="cart-empty-sub">পণ্য বেছে "কার্টে যোগ করুন" বোতামে চাপুন।</p>
+      </div>
+
+      <!-- Item list (populated by JS) -->
+      <ul class="cart-list" data-cart-list aria-label="কার্টের পণ্য তালিকা"></ul>
+
+      <!-- Cart summary + proceed button -->
+      <div class="cart-foot" data-cart-foot>
+        <div class="summary" aria-live="polite">
+          <p class="sum-row">
+            <span>সাবটোটাল</span>
+            <span data-sum="cart-subtotal">—</span>
+          </p>
+          <p class="sum-row">
+            <span>ডেলিভারি চার্জ</span>
+            <span data-sum="cart-delivery">—</span>
+          </p>
+          <p class="sum-row sum-total">
+            <span>সর্বমোট</span>
+            <span data-sum="cart-total">—</span>
+          </p>
+        </div>
+        <button type="button" class="btn btn-primary confirm" data-cart-checkout>
+          <Icon name="arrow-right" size={18} />
+          <span>চেকআউট করুন</span>
+        </button>
+        <p class="legal">পণ্য বেছে নিন, বিস্তারিত পূরণ করুন, WhatsApp-এ অর্ডার করুন।</p>
+      </div>
+    </div>
+
     <!-- ── Form view ────────────────────────────────────────────────── -->
-    <div class="view" data-view="form">
+    <div class="view" data-view="form" hidden>
       <header class="head">
         <div>
           <p class="eyebrow">অর্ডার ফর্ম</p>
-          <h2 class="title" id="checkout-title">অর্ডার করুন</h2>
+          <h2 class="title" id="checkout-form-title">অর্ডার করুন</h2>
         </div>
         <button type="button" class="close" data-checkout-close aria-label="বন্ধ করুন">
           <Icon name="close" size={20} />
@@ -49,60 +103,8 @@ const checkoutData = {
       </header>
 
       <form class="form" data-checkout-form novalidate>
-        <!-- Product -->
-        <div class="field">
-          <label class="label" for="co-item">পণ্য</label>
-          <div class="control">
-            <select class="input select" id="co-item" name="itemId" aria-describedby="err-itemId">
-              <optgroup label="প্রোডাক্ট">
-                {
-                  products.map((o) => (
-                    <option value={o.id}>
-                      {o.name} — {o.meta} — {formatBdt(o.price)}
-                    </option>
-                  ))
-                }
-              </optgroup>
-              <optgroup label="কম্বো">
-                {
-                  combos.map((o) => (
-                    <option value={o.id}>
-                      {o.name} — {o.meta} — {formatBdt(o.price)}
-                    </option>
-                  ))
-                }
-              </optgroup>
-            </select>
-            <span class="select-arrow" aria-hidden="true"><Icon name="chevron" size={16} /></span>
-          </div>
-          <p class="err" id="err-itemId" data-err="itemId" role="alert"></p>
-        </div>
-
-        <!-- Quantity -->
-        <div class="field">
-          <label class="label" for="co-qty">পরিমাণ</label>
-          <div class="stepper">
-            <button type="button" class="step" data-qty="-1" aria-label="পরিমাণ কমান">
-              <Icon name="minus" size={18} />
-            </button>
-            <input
-              class="input qty"
-              id="co-qty"
-              name="quantity"
-              type="number"
-              inputmode="numeric"
-              value="1"
-              min="1"
-              max="10"
-              step="1"
-              aria-describedby="err-quantity"
-            />
-            <button type="button" class="step" data-qty="1" aria-label="পরিমাণ বাড়ান">
-              <Icon name="plus" size={18} />
-            </button>
-          </div>
-          <p class="err" id="err-quantity" data-err="quantity" role="alert"></p>
-        </div>
+        <!-- Read-only cart summary at the top of the form -->
+        <div class="cart-recap" data-cart-recap aria-label="কার্ট সারসংক্ষেপ"></div>
 
         <!-- Name -->
         <div class="field">
@@ -189,20 +191,48 @@ const checkoutData = {
             <span class="area-item">
               <input type="radio" name="area" id="co-area-inside" value="inside" checked class="sr-only" />
               <label class="area-label" for="co-area-inside">
-                <span class="area-name">রাজশাহীর ভিতরে</span>
-                <span class="area-cost">{formatBdt(site.deliveryCharge.insideRajshahi)}</span>
+                <span class="area-name">ঢাকার ভিতরে</span>
+                <span class="area-cost">{formatBdt(site.deliveryCharge.insideDhaka)}</span>
               </label>
             </span>
             <span class="area-item">
               <input type="radio" name="area" id="co-area-outside" value="outside" class="sr-only" />
               <label class="area-label" for="co-area-outside">
-                <span class="area-name">রাজশাহীর বাইরে</span>
-                <span class="area-cost">{formatBdt(site.deliveryCharge.outsideRajshahi)}</span>
+                <span class="area-name">ঢাকার বাইরে</span>
+                <span class="area-cost">{formatBdt(site.deliveryCharge.outsideDhaka)}</span>
               </label>
             </span>
           </div>
           <p class="err" id="err-area" data-err="area" role="alert"></p>
         </fieldset>
+
+        <!-- Payment method (only shown when both are enabled) -->
+        {showPaymentChoice && (
+          <fieldset class="field area-field" id="co-payment-fieldset">
+            <legend class="label">পেমেন্ট পদ্ধতি</legend>
+            <div class="areas">
+              {site.paymentMethods.bkash && (
+                <span class="area-item">
+                  <input type="radio" name="paymentMethod" id="co-pay-bkash" value="bkash" checked class="sr-only" />
+                  <label class="area-label" for="co-pay-bkash">
+                    <span class="area-name">bKash Send Money</span>
+                    <span class="area-cost">অ্যাকাউন্টে পাঠান</span>
+                  </label>
+                </span>
+              )}
+              {site.paymentMethods.cod && (
+                <span class="area-item">
+                  <input type="radio" name="paymentMethod" id="co-pay-cod" value="cod" class="sr-only" />
+                  <label class="area-label" for="co-pay-cod">
+                    <span class="area-name">ক্যাশ অন ডেলিভারি</span>
+                    <span class="area-cost">পৌঁছে দিলে পরিশোধ</span>
+                  </label>
+                </span>
+              )}
+            </div>
+            <p class="err" id="err-paymentMethod" data-err="paymentMethod" role="alert"></p>
+          </fieldset>
+        )}
 
         <!-- Note -->
         <div class="field">
@@ -233,8 +263,8 @@ const checkoutData = {
           </p>
         </div>
 
-        <!-- ── bKash ───────────────────────────────────────────────── -->
-        <div class="bkash">
+        <!-- ── bKash card ──────────────────────────────────────────── -->
+        <div class="bkash" data-payment-target="bkash">
           <div class="bkash-top">
             <p class="bkash-brand">
               <span class="bkash-mark" aria-hidden="true"><Icon name="wallet" size={16} /></span>
@@ -259,6 +289,18 @@ const checkoutData = {
             উপরের নাম্বারে মোট <strong data-sum="total-inline">—</strong>
             {' '}{checkoutData.bkashAction} করুন, তারপর WhatsApp-এ ট্রানজেকশনের স্ক্রিনশট পাঠান।
           </p>
+        </div>
+
+        <!-- ── COD info ────────────────────────────────────────────── -->
+        <div class="cod" data-payment-target="cod" hidden>
+          <p class="cod-icon" aria-hidden="true"><Icon name="truck" size={20} /></p>
+          <div>
+            <p class="cod-title">ক্যাশ অন ডেলিভারি</p>
+            <p class="cod-help">
+              পণ্য বাড়িতে পৌঁছানোর সময় কুরিয়ারকে মোট
+              <strong data-sum="total-inline-cod">—</strong> নগদে পরিশোধ করুন।
+            </p>
+          </div>
         </div>
 
         <button type="submit" class="btn btn-primary confirm">
@@ -291,25 +333,27 @@ const checkoutData = {
             <dt>মোট</dt>
             <dd data-done="total">—</dd>
           </div>
-          <div>
-            <dt>bKash নাম্বার</dt>
-            <dd class="done-bkash">
-              <span>{site.bkashNumber}</span>
-              <button type="button" class="copy copy-sm" data-copy={site.bkashNumber}>
-                <span class="copy-idle">
-                  <Icon name="copy" size={14} />
-                  <span>কপি</span>
-                </span>
-                <span class="copy-done" aria-hidden="true">
-                  <Icon name="check" size={14} />
-                  <span>হয়েছে</span>
-                </span>
-              </button>
-            </dd>
-          </div>
+          {site.paymentMethods.bkash && (
+            <div data-done-bkash>
+              <dt>bKash নাম্বার</dt>
+              <dd class="done-bkash">
+                <span>{site.bkashNumber}</span>
+                <button type="button" class="copy copy-sm" data-copy={site.bkashNumber}>
+                  <span class="copy-idle">
+                    <Icon name="copy" size={14} />
+                    <span>কপি</span>
+                  </span>
+                  <span class="copy-done" aria-hidden="true">
+                    <Icon name="check" size={14} />
+                    <span>হয়েছে</span>
+                  </span>
+                </button>
+              </dd>
+            </div>
+          )}
         </dl>
 
-        <p class="done-remind">
+        <p class="done-remind" data-done-bkash-remind>
           <Icon name="camera" size={16} />
           <span>টাকা পাঠানোর পর ট্রানজেকশনের স্ক্রিনশটটি WhatsApp-এ পাঠাতে ভুলবেন না।</span>
         </p>
@@ -432,6 +476,161 @@ const checkoutData = {
     background: var(--color-beige);
   }
 
+  /* ── Cart view ───────────────────────────────────────────────────────── */
+  .cart-empty {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 3rem 1.5rem;
+    text-align: center;
+    color: var(--color-ink-mute);
+  }
+
+  [data-cart-empty]:not([hidden]) {
+    display: flex;
+  }
+
+  .cart-empty-icon {
+    color: var(--color-line-strong);
+  }
+
+  .cart-empty-text {
+    font-weight: 700;
+    color: var(--color-ink-soft);
+  }
+
+  .cart-empty-sub {
+    font-size: var(--text-sm);
+  }
+
+  .cart-list {
+    list-style: none;
+    margin: 0;
+    padding: 0.75rem clamp(1rem, 4vw, 1.5rem) 0;
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  /* JS populates <li> elements with class .cart-item */
+  :global(.cart-item) {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    background: var(--color-page);
+    border-radius: var(--radius-sm);
+  }
+
+  :global(.cart-item-name) {
+    flex: 1;
+    min-width: 0;
+    font-size: var(--text-sm);
+    font-weight: 600;
+    line-height: 1.4;
+  }
+
+  :global(.cart-item-price) {
+    font-size: var(--text-sm);
+    font-variant-numeric: tabular-nums;
+    color: var(--color-ink-soft);
+    white-space: nowrap;
+  }
+
+  :global(.cart-item-stepper) {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex: none;
+  }
+
+  :global(.cart-step) {
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    border: 1px solid var(--color-line-strong);
+    border-radius: var(--radius-xs);
+    background: var(--color-card);
+    cursor: pointer;
+    font-size: var(--text-sm);
+    font-weight: 700;
+    transition: background-color var(--dur-fast) var(--ease-out-soft);
+  }
+
+  :global(.cart-step:hover:not(:disabled)) {
+    background: var(--color-beige);
+    border-color: var(--color-ink);
+  }
+
+  :global(.cart-step:disabled) {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+
+  :global(.cart-qty) {
+    width: 1.75rem;
+    text-align: center;
+    font-size: var(--text-sm);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  :global(.cart-remove) {
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    flex: none;
+    border: 0;
+    border-radius: var(--radius-xs);
+    background: transparent;
+    color: var(--color-ink-mute);
+    cursor: pointer;
+    transition: color var(--dur-fast) var(--ease-out-soft);
+  }
+
+  :global(.cart-remove:hover) {
+    color: var(--color-orange-deep);
+  }
+
+  .cart-foot {
+    padding: 1rem clamp(1rem, 4vw, 1.5rem) 1.5rem;
+    display: grid;
+    gap: 1rem;
+  }
+
+  /* ── Cart recap in form view ─────────────────────────────────────────── */
+  :global(.recap-item) {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.5rem;
+    font-size: var(--text-sm);
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--color-line);
+  }
+
+  :global(.recap-item:last-child) {
+    border-bottom: none;
+  }
+
+  :global(.recap-name) {
+    color: var(--color-ink-soft);
+  }
+
+  :global(.recap-qty-price) {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .cart-recap {
+    background: var(--color-page);
+    border-radius: var(--radius-sm);
+    padding: 0.5rem 1rem;
+    margin-bottom: 0.25rem;
+  }
+
   /* ── Form ────────────────────────────────────────────────────────────── */
   .form {
     display: grid;
@@ -524,54 +723,7 @@ const checkoutData = {
     display: none;
   }
 
-  /* ── Stepper ─────────────────────────────────────────────────────────── */
-  .stepper {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  .step {
-    display: grid;
-    place-items: center;
-    width: 2.875rem;
-    height: 2.875rem;
-    flex: none;
-    border: 1px solid var(--color-line-strong);
-    border-radius: var(--radius-sm);
-    background: transparent;
-    cursor: pointer;
-    transition:
-      background-color var(--dur-fast) var(--ease-out-soft),
-      border-color var(--dur-fast) var(--ease-out-soft);
-  }
-
-  .step:hover:not(:disabled) {
-    background: var(--color-page);
-    border-color: var(--color-ink);
-  }
-
-  .step:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
-
-  .qty {
-    width: 4.5rem;
-    text-align: center;
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-    -moz-appearance: textfield;
-    appearance: textfield;
-  }
-
-  .qty::-webkit-outer-spin-button,
-  .qty::-webkit-inner-spin-button {
-    appearance: none;
-    margin: 0;
-  }
-
-  /* ── Delivery area ───────────────────────────────────────────────────── */
+  /* ── Delivery area / payment method radio groups ─────────────────────── */
   .areas {
     display: grid;
     gap: 0.5rem;
@@ -708,6 +860,39 @@ const checkoutData = {
   }
 
   .bkash-help strong {
+    color: var(--color-ink);
+  }
+
+  /* ── COD info card ───────────────────────────────────────────────────── */
+  .cod {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.9rem;
+    padding: 1rem 1.1rem;
+    border: 1.5px solid var(--color-ink);
+    border-radius: var(--radius-md);
+  }
+
+  .cod-icon {
+    flex: none;
+    color: var(--color-orange-deep);
+    margin-top: 0.1rem;
+  }
+
+  .cod-title {
+    font-family: var(--font-display);
+    font-size: var(--text-base);
+    font-weight: 800;
+    margin-bottom: 0.3rem;
+  }
+
+  .cod-help {
+    font-size: var(--text-xs);
+    line-height: 1.7;
+    color: var(--color-ink-soft);
+  }
+
+  .cod-help strong {
     color: var(--color-ink);
   }
 

@@ -1,11 +1,11 @@
 dist/
 .astro/
 node_modules/
+.stock/
 .DS_Store
 *.log
 .env
 .env.production
 .vercel/
 .netlify/
-lighthouse/
 lighthouse/

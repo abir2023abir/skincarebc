@@ -10,8 +10,8 @@ import Icon from '~/components/ui/Icon.astro';
 ---
 
 <section class="section combos" id="combos">
-  <Botanical file="rose.png" size={96} top="10%" right="2%" rotate="-16deg" />
-  <Botanical file="sprig-dried.png" size={112} bottom="8%" left="1%" rotate="16deg" />
+  <Botanical file="rose.png" size={100} top="9%" right="2%" rotate="-16deg" />
+  <Botanical file="sprig-green.png" size={104} bottom="8%" left="1%" rotate="16deg" />
 
   <div class="wrap">
     <header class="head">
@@ -184,8 +184,9 @@ import Icon from '~/components/ui/Icon.astro';
   }
 
   .combo-thumb :global(img) {
-    width: 60%;
-    height: auto;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
 
   .combo-text {

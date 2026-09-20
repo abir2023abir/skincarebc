@@ -18,8 +18,8 @@ const hero = site.products[0]!;
 ---
 
 <section class="section final">
-  <Botanical file="sprig-green.png" size={110} top="6%" left="2%" rotate="-20deg" />
-  <Botanical file="anemone.png" size={88} bottom="16%" right="3%" rotate="14deg" />
+  <Botanical file="sprig-green.png" size={112} top="6%" left="2%" rotate="-20deg" />
+  <Botanical file="rose-stem.png" size={104} bottom="15%" right="3%" rotate="14deg" />
 
   <p class="ghost display" aria-hidden="true">
     <span>MORE SKINCARE</span>
@@ -39,8 +39,8 @@ const hero = site.products[0]!;
       </div>
 
       <p class="meta">
-        ডেলিভারি চার্জ — রাজশাহীর ভিতরে ৳{site.deliveryCharge.insideRajshahi}, বাইরে ৳{
-          site.deliveryCharge.outsideRajshahi
+        ডেলিভারি চার্জ — ঢাকার ভিতরে ৳{site.deliveryCharge.insideDhaka}, বাইরে ৳{
+          site.deliveryCharge.outsideDhaka
         }
       </p>
     </div>
@@ -143,10 +143,12 @@ const hero = site.products[0]!;
   }
 
   .art :global(img) {
-    width: min(74%, 17rem);
-    height: auto;
-    rotate: 14deg;
-    filter: drop-shadow(0 40px 44px rgb(19 19 19 / 0.26));
+    width: min(86%, 22rem);
+    aspect-ratio: 4 / 5;
+    object-fit: cover;
+    border-radius: var(--radius-lg);
+    rotate: 4deg;
+    box-shadow: var(--shadow-float);
   }
 
   @media (max-width: 60rem) {

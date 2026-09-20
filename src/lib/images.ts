@@ -14,9 +14,9 @@ import type { ImageMetadata } from 'astro';
 
 type Module = { default: ImageMetadata };
 
-const products = import.meta.glob<Module>('../assets/products/*.png', { eager: true });
-const scenes = import.meta.glob<Module>('../assets/scenes/*.png', { eager: true });
-const botanical = import.meta.glob<Module>('../assets/botanical/*.png', { eager: true });
+const products = import.meta.glob<Module>('../assets/products/*.{png,jpg}', { eager: true });
+const scenes = import.meta.glob<Module>('../assets/scenes/*.{png,jpg}', { eager: true });
+const botanical = import.meta.glob<Module>('../assets/botanical/*.{png,jpg}', { eager: true });
 
 function lookup(files: Record<string, Module>, path: string, kind: string): ImageMetadata {
   const file = path.split('/').pop();

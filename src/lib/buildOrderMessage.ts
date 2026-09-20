@@ -22,7 +22,10 @@ export interface OrderMessageInput {
   mobile: string;
   address: string;
   district: string;
-  bkashNumber: string;
+  /** 'bkash' | 'cod'. Drives the payment block. */
+  paymentMethod: 'bkash' | 'cod';
+  /** Required when paymentMethod === 'bkash'. */
+  bkashNumber?: string;
   /** Optional customer note. Blank/whitespace drops the whole line. */
   note?: string;
 }
@@ -34,6 +37,17 @@ function oneLine(value: string): string {
 
 export function buildOrderMessage(input: OrderMessageInput): string {
   const total = formatBdt(input.total);
+
+  const paymentLines: string[] =
+    input.paymentMethod === 'cod'
+      ? [
+          `💳 Payment: ক্যাশ অন ডেলিভারি (COD)`,
+          `ডেলিভারির সময় মোট ${total} কুরিয়ারকে পরিশোধ করুন।`,
+        ]
+      : [
+          `💳 Payment: bKash (${oneLine(input.bkashNumber ?? '')})`,
+          `আমি মোট ${total} পাঠিয়েছি / পাঠাচ্ছি। ট্রানজেকশনের স্ক্রিনশট নিচে পাঠাচ্ছি।`,
+        ];
 
   const lines: string[] = [
     'আসসালামু আলাইকুম, আমি একটি অর্ডার করতে চাই।',
@@ -50,8 +64,7 @@ export function buildOrderMessage(input: OrderMessageInput): string {
     `📞 Mobile: ${oneLine(input.mobile)}`,
     `📍 Address: ${oneLine(input.address)}, ${oneLine(input.district)}`,
     '',
-    `💳 Payment: bKash (${oneLine(input.bkashNumber)})`,
-    `আমি মোট ${total} পাঠিয়েছি / পাঠাচ্ছি। ট্রানজেকশনের স্ক্রিনশট নিচে পাঠাচ্ছি।`,
+    ...paymentLines,
   ];
 
   const note = oneLine(input.note ?? '');

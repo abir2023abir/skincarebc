@@ -3,9 +3,8 @@ import { defineConfig, fontProviders } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
 import tailwindcss from '@tailwindcss/vite';
 
-// NOTE: replace with the real production origin before deploying.
-// It is only used for <link rel="canonical">, Open Graph URLs and the sitemap.
-const SITE = 'https://skincare-bd.pages.dev';
+// Production origin for canonical links, Open Graph, and sitemap.
+const SITE = process.env.SITE_URL || 'https://skincarebc.vercel.app';
 
 export default defineConfig({
   site: SITE,
